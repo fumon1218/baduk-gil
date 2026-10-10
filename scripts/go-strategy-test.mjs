@@ -153,4 +153,18 @@ if (fs.existsSync(path.join(dir, 'games-pack.js'))) {
   ok('공개 기보 팩 ' + pack.length + '판(' + cnt.join('/') + ') 모두 규칙대로 두어지고 수준 기준에 맞음');
 }
 
+/* ---------- 7. 교재 목차·변화도 강의 ---------- */
+if (fs.existsSync(path.join(dir, 'curriculum.js'))) {
+  globalThis.window = globalThis; for (const f of ['lessons-lecture.js', 'curriculum.js']) require(path.join(dir, f));
+  const Lx = globalThis.OKS_GO_LESSONS, C = globalThis.OKS_GO_CURR, seen = new Set();
+  C.CHAPTERS.forEach((c) => C.lessonsOf(c).forEach((l) => { assert.ok(!seen.has(l.id), '중복 ' + l.id); seen.add(l.id); }));
+  assert.equal(seen.size, Lx.LESSONS.length, '모든 수업이 목차에 들어 있어야 함');
+  for (const id of ['k1', 'k2']) { const l = Lx.LESSONS.find((q) => q.id === id); l.pages.forEach((pg) => { const pp = Lx.preparePage(pg); pp.script.forEach((st) => assert.ok(pp.game.play(st.s % pp.n, (st.s / pp.n) | 0), id + ' 불법수')); }); }
+  { const k1 = Lx.LESSONS.find((q) => q.id === 'k1'), a = Lx.preparePage(k1.pages[1]), b = Lx.preparePage(k1.pages[3]);
+    a.script.forEach((st) => a.game.play(st.s % 9, (st.s / 9) | 0)); b.script.forEach((st) => b.game.play(st.s % 9, (st.s / 9) | 0));
+    assert.equal(a.game.group(4, 3).libs.length, 2); assert.ok(b.game.group(4, 3).libs.length >= 2, '실패도: 백이 축머리와 이어져 활로 2곳 이상'); }
+  { const k2 = Lx.LESSONS.find((q) => q.id === 'k2'); for (const i of [1, 2]) { const pp = Lx.preparePage(k2.pages[i]); let cap = 0; pp.script.forEach((st) => { const r = pp.game.play(st.s % 7, (st.s / 7) | 0); cap += r.captured ? r.captured.length : 0; }); assert.equal(cap, 1, '양단수 변화도 ' + i + ': 한 점을 따내야 함'); } }
+  ok('교재 목차 ' + seen.size + '강 · 변화도 강의 k1/k2');
+}
+
 console.log(pass + ' PASS');

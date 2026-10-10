@@ -116,7 +116,7 @@ body.go-page{background:radial-gradient(ellipse at 50% 30%,#7a6340 0%,#4b3b27 58
 .go-words{max-height:86vh;overflow:auto;text-align:left}.go-words dt{font-weight:800;margin-top:8px;color:#2b3d66}.go-words dd{margin:2px 0 0 0;line-height:1.45}
 
 /* ---------- 바둑길 바탕 ---------- */
-:root{--font:'Pretendard','Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif}
+:root{--serif:'Noto Serif KR','Nanum Myeongjo','Batang','AppleMyungjo',serif;--font:'Pretendard','Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif}
 .bk-overlay{position:fixed;inset:0;z-index:80;background:rgba(15,25,45,.62);display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto}
 .bk-finish{width:min(520px,100%);background:#fffdf6;color:#2b3f5c;border-radius:26px;padding:24px 22px;text-align:center;box-shadow:0 18px 50px rgba(0,0,0,.45)}
 .bk-finish h2{margin:0 0 6px;font-size:28px}.bk-finish p{margin:6px 0 10px;font-size:18px;line-height:1.5}
@@ -126,3 +126,17 @@ body.go-page{background:radial-gradient(ellipse at 50% 30%,#7a6340 0%,#4b3b27 58
 .bk-btn.green{background:#2f966f}.bk-btn.orange{background:#e0872e}.bk-btn.blue{background:#4c6a92}.bk-btn:active{transform:translateY(2px)}
 .bk-note{font-size:13px;opacity:.65}
 body.calm .ch-spin{animation:none}
+/* ---- 정통 강의 톤: 상아색 종이 · 먹색 글씨 · 나무판 ---- */
+body.chess-page{background:radial-gradient(ellipse at 50% 20%,#4a3b2a 0%,#2a2018 60%,#17110c 100%);background-image:var(--bg-img,none),radial-gradient(ellipse at 50% 20%,#4a3b2a 0%,#2a2018 60%,#17110c 100%);background-size:cover}
+.ch-card{background:#f8f2e4;color:#2a2018;border-radius:14px;border:1px solid #cdbf9e}
+.ch-title b,.ch-card h2,.go-ch summary b{font-family:var(--serif)}
+.ch-card h2{font-size:26px;letter-spacing:.02em}
+.go-rank{margin:6px 0 12px;padding:10px 14px;border:1px solid #cdbf9e;border-left:6px solid #7a5a2e;background:#fffaf0;border-radius:8px;font-size:17px}.go-rank small{display:block;font-size:12px;opacity:.7;margin-top:2px}
+.go-ch{margin:10px 0;border:1px solid #d9ccae;border-radius:10px;background:#fffaf0;padding:2px 12px 12px}.go-ch summary{cursor:pointer;padding:10px 0;font-size:18px;list-style:none}.go-ch summary::-webkit-details-marker{display:none}.go-ch summary::before{content:'▸ ';color:#7a5a2e}.go-ch[open] summary::before{content:'▾ '}.go-ch summary small{font-size:13px;opacity:.7;font-weight:500}
+.go-goal{margin:0 0 6px;font-size:14px;line-height:1.5;color:#5b4a32;text-align:left}.go-ch h4{margin:12px 0 6px;font-size:15px;color:#7a5a2e;border-bottom:1px dashed #d9ccae;padding-bottom:3px}
+.go-exam{margin-top:12px;width:100%;font-size:15px;background:#efe3c6;border:1px solid #b89c62;border-radius:8px;box-shadow:none}
+.go-src{font-size:12px;opacity:.65;text-align:left;line-height:1.5;margin:12px 0 0}
+.go-lesson{border:1px solid #d9ccae;border-radius:10px;background:#fff;color:#2a2018}.go-lesson.done{background:#eef3e4;border-color:#9fb27a}.go-lesson.next{border-color:#7a5a2e;background:#f6ead0;box-shadow:0 0 0 2px #d9bf86}
+.ch-btn{color:#2a2018;background:#f8f2e4;border-radius:10px}.ch-msg{font-family:var(--font)}
+@media (min-width:1000px){.go-map{width:min(860px,100%)}}
+.go-map #diagBtn,.go-map #wrongBtn{width:100%;margin:6px 0}

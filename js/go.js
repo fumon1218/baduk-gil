@@ -332,26 +332,51 @@ function showWords() {
 }
 /* ---------- 실력 진단: 단계마다 한 문제씩 풀어 보고, 어디서부터 시작하면 좋을지 알려 줘요 ---------- */
 function startDiag() {
-  const picks = []; L.LEVELS.forEach((lv, i) => { const ls = L.LESSONS.filter((l) => l.lv === i + 1 && l.items.length && !l.replay && !/^r\d+$/.test(l.id)); if (!ls.length) return; const l = ls[Math.floor(ls.length / 2)]; picks.push({ lv: i + 1, lid: l.id, idx: 0, it: l.items[0] }); });
-  startLesson('diag', { id: 'diag', diag: true, lv: 1, title: '실력 진단', pages: [], items: picks.map((q) => q.it), srcs: picks.map((q) => ({ lid: q.lid, idx: q.idx })), picks, done: '' });
+  const picks = []; C.CHAPTERS.slice(0, 9).forEach((ch) => { const ls = C.lessonsOf(ch.id).filter((l) => l.items.length); if (!ls.length) return; const l = ls[Math.floor(ls.length / 2)]; picks.push({ ch: ch.id, lid: l.id, idx: 0, it: l.items[0] }); });
+  startLesson('diag', { id: 'diag', lv: 1, title: '실력 진단', pages: [], items: picks.map((q) => q.it), srcs: picks.map((q) => ({ lid: q.lid, idx: q.idx })), picks, diag: true, done: '' });
 }
 function diagResult() {
-  const bad = lessonStep.bad || {}, ps = lesson.picks; let at = ps.findIndex((q, i) => bad[i]); const okAll = at < 0;
-  const lvl = okAll ? L.LEVELS.length : ps[at].lv; const list = L.LESSONS.filter((l) => l.lv === (okAll ? 5 : lvl)), first = list.find((l) => !progress[l.id]) || list[0];
-  const msg = okAll ? '모든 단계를 잘 풀었어요! 전략 수업이나 컴퓨터와의 대국에 도전해 보세요.' : L.LEVELS[lvl - 1].icon + ' ' + L.LEVELS[lvl - 1].name + ' 단계부터 시작하면 딱 좋아요.';
-  return { msg, first, lvl, okAll };
+  const bad = lessonStep.bad || {}, ps = lesson.picks; const at = ps.findIndex((q, i) => bad[i]), okAll = at < 0;
+  const ch = okAll ? C.CHAPTERS[8] : C.CHAPTERS.find((c) => c.id === ps[at].ch), ci = C.CHAPTERS.indexOf(ch);
+  const list = C.lessonsOf(ch.id), first = list.find((l) => !progress[l.id]) || list[0];
+  const got = okAll ? C.CHAPTERS[8].rank : (ci > 0 ? C.CHAPTERS[ci - 1].rank : C.START_RANK); setRank(got);
+  const msg = okAll ? '모든 장의 문제를 잘 풀었습니다. 현재 급수는 ' + C.rankName(got) + '로 시작합니다. 대국과 기보 감상으로 실력을 다지십시오.' : '현재 급수는 ' + C.rankName(got) + '로 시작합니다. 제' + ch.no + '장 「' + ch.title + '」부터 공부하시면 좋습니다.';
+  return { msg, first, ch, okAll };
 }
+/* ---------- 급수와 승급 시험 (앱 자체 기준이며 공식 급수가 아닙니다) ---------- */
+const C = window.OKS_GO_CURR, RANK_KEY = 'baduk_rank_v1';
+const loadRank = () => { try { return JSON.parse(localStorage.getItem(RANK_KEY)) || { rank: C.START_RANK, exams: {} }; } catch (e) { return { rank: C.START_RANK, exams: {} }; } };
+function setRank(r) { const d = loadRank(); if (r < d.rank) { d.rank = r; try { localStorage.setItem(RANK_KEY, JSON.stringify(d)); } catch (e) {} } return d.rank; }
+function startExam(chId) {
+  const ch = C.CHAPTERS.find((c) => c.id === chId), pool = [];
+  C.lessonsOf(chId).forEach((l) => l.items.forEach((it, idx) => pool.push({ lid: l.id, idx, it })));
+  for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+  const pk = pool.slice(0, 10); if (!pk.length) return;
+  startLesson('exam', { id: 'exam', lv: 1, title: '승급 시험 · 제' + ch.no + '장', exam: ch, pages: [], items: pk.map((q) => q.it), srcs: pk.map((q) => ({ lid: q.lid, idx: q.idx })), done: '' });
+}
+function examResult() {
+  const n = lesson.items.length, bad = Object.keys(lessonStep.bad || {}).length, right = n - bad, pass = right / n >= 0.7, ch = lesson.exam, before = loadRank().rank;
+  const d = loadRank(); const ex = d.exams[ch.id] || { best: 0 }; ex.best = Math.max(ex.best, right); ex.of = n; d.exams[ch.id] = ex; try { localStorage.setItem(RANK_KEY, JSON.stringify(d)); } catch (e) {}
+  if (pass) setRank(ch.rank);
+  const now = loadRank().rank;
+  const msg = pass ? (now < before ? C.rankName(now) + '로 승급했습니다. 축하드립니다.' : '합격입니다. 현재 급수 ' + C.rankName(now) + '를 유지합니다.') : '아쉽게도 합격 기준(70%)에 미치지 못했습니다. 틀린 문제는 오답노트에 담았으니 복습하고 다시 도전하십시오.';
+  return { pass, right, n, msg };
+}
+function chapLabel() { if (!lesson || lesson.srcs) return ''; const c = C.chapterOf(lesson.id); return c ? '제' + c.no + '장 · ' : ''; }
 function openCurriculum() {
   const el = $('menu'); el.hidden = false; document.querySelectorAll('.oks-overlay').forEach((x) => x.remove());
-  let nextId = null; L.LESSONS.some((l) => { if (!progress[l.id]) { nextId = l.id; return true; } return false; });
-  const lv = L.LEVELS.map((lv, i) => {
-    const list = L.LESSONS.filter((l) => l.lv === i + 1), done = list.filter((l) => progress[l.id]).length;
-    return '<section class="go-lv"><h3><i>' + lv.icon + '</i> ' + lv.name + ' <small>' + lv.sub + ' · ' + done + '/' + list.length + '</small></h3><div class="go-lessons">' +
-      list.map((l) => '<button type="button" class="go-lesson' + (progress[l.id] ? ' done' : '') + (l.id === nextId ? ' next' : '') + '" data-id="' + l.id + '"><i>' + l.icon + '</i><b>' + l.title + '</b><span>' + (progress[l.id] ? '⭐'.repeat(progress[l.id].stars) : (l.id === nextId ? '다음 차례' : l.sub || '')) + '</span></button>').join('') + '</div></section>';
+  let nextId = null, nextCh = null; C.CHAPTERS.some((c) => C.lessonsOf(c.id).some((l) => { if (!progress[l.id]) { nextId = l.id; nextCh = c.id; return true; } return false; }));
+  const rk = loadRank(), nxtRank = (C.CHAPTERS.find((c) => c.rank < rk.rank) || {}).rank;
+  const chs = C.CHAPTERS.map((c) => {
+    const ls = C.lessonsOf(c.id), done = ls.filter((l) => progress[l.id]).length, ex = rk.exams[c.id], open = c.id === nextCh;
+    const secs = c.sections.map((s) => '<h4>' + s.t + '</h4><div class="go-lessons">' + s.ids.map((id) => L.LESSONS.find((l) => l.id === id)).filter(Boolean).map((l) => '<button type="button" class="go-lesson' + (progress[l.id] ? ' done' : '') + (l.id === nextId ? ' next' : '') + '" data-id="' + l.id + '"><i>' + l.icon + '</i><b>' + l.title + '</b><span>' + (progress[l.id] ? '⭐'.repeat(progress[l.id].stars) : (l.id === nextId ? '다음 차례' : l.sub || '')) + '</span></button>').join('') + '</div>').join('');
+    return '<details class="go-ch"' + (open ? ' open' : '') + '><summary><b>제' + c.no + '장 ' + c.title + '</b> <small>' + c.sub + ' · ' + done + '/' + ls.length + '강</small></summary><p class="go-goal">학습 목표: ' + c.goal + '</p>' + secs + (c.exam === false ? '' : '<button type="button" class="ch-btn go-exam" data-exam="' + c.id + '">📝 승급 시험 · 합격 시 ' + C.rankName(c.rank) + (ex ? ' (최고 ' + ex.best + '/' + ex.of + ')' : '') + '</button>') + '</details>';
   }).join('');
   const wn = Object.keys(loadWrong()).length, wd = wrongPool(true).length;
-  el.innerHTML = '<div class="ch-card go-map"><h2>🎓 바둑 배우기</h2><p>처음이라면 <b>입문</b>부터 차례대로! 이미 아는 부분은 건너뛰어도 돼요.</p>' + '<button type="button" class="ch-btn big" id="diagBtn">🧭 실력 진단 · 어디서부터 할까?</button>' + (wn ? '<button type="button" class="ch-btn big go" id="wrongBtn">📕 오답노트 · 틀린 문제 ' + wn + '개' + (wd ? ' (복습할 때: ' + wd + '개)' : '') + '</button>' : '') + lv + '<div class="ch-row"><button type="button" class="ch-chip" id="wordsBtn2">📖 낱말 풀이</button><button type="button" class="ch-chip" id="mapBack">← 처음 화면</button></div></div>';
+  el.innerHTML = '<div class="ch-card go-map"><h2>바둑길 · 교재 목차</h2><div class="go-rank">현재 급수 <b>' + C.rankName(rk.rank) + '</b>' + (nxtRank ? ' · 다음 목표 <b>' + C.rankName(nxtRank) + '</b>' : ' · 최고 단계에 도달했습니다') + '<small>급수는 이 앱의 학습 기준이며 공식 급수와 다릅니다.</small></div>' +
+    '<button type="button" class="ch-btn big" id="diagBtn">🧭 실력 진단 · 어느 장부터 시작할까요?</button>' + (wn ? '<button type="button" class="ch-btn big go" id="wrongBtn">📕 오답노트 · 틀린 문제 ' + wn + '개' + (wd ? ' (복습할 때: ' + wd + '개)' : '') + '</button>' : '') + chs + '<div class="ch-row"><button type="button" class="ch-chip" id="wordsBtn2">📖 용어 사전</button><button type="button" class="ch-chip" id="mapBack">← 처음 화면</button></div><p class="go-src">공개 기보: CWI 바둑 기보 데이터베이스(Jan van der Steen 외). 정석·용어 해설은 앱 제작자가 정리한 것으로, 전문가 검수를 거쳐 계속 보완합니다.</p></div>';
   el.querySelectorAll('[data-id]').forEach((b) => { b.onclick = () => { O.unlock(); startLesson(b.dataset.id); }; });
+  el.querySelectorAll('[data-exam]').forEach((b) => { b.onclick = () => { O.unlock(); startExam(b.dataset.exam); }; });
   $('diagBtn').onclick = () => { O.unlock(); startDiag(); }; $('wordsBtn2').onclick = showWords;
   if ($('wrongBtn')) $('wrongBtn').onclick = () => { O.unlock(); startWrong(); };
   $('mapBack').onclick = () => openMenu(false); const nx = el.querySelector('.next'); if (nx && nx.scrollIntoView) setTimeout(() => nx.scrollIntoView({ block: 'center' }), 50);
@@ -360,7 +385,7 @@ function openCurriculum() {
 /* ---------- 배우기: 수업 진행 ---------- */
 let lessonStep = { page: 0, item: 0, mistakes: 0, asked: 0, phase: 'page', bad: {} }, scriptRun = 0;
 function startLesson(id, obj) {
-  resetState(); startWorker(); mode = 'learn'; lesson = obj || L.LESSONS.find((l) => l.id === id); if (!lesson) return; $('menu').hidden = true; $('modeLabel').textContent = L.LEVELS[lesson.lv - 1].name + ' · ' + lesson.title;
+  resetState(); startWorker(); mode = 'learn'; lesson = obj || L.LESSONS.find((l) => l.id === id); if (!lesson) return; $('menu').hidden = true; $('modeLabel').textContent = chapLabel() + lesson.title;
   lessonStep = { page: 0, item: 0, mistakes: 0, asked: 0, phase: 'page', bad: {} }; stats = O.newStats(); S.setView(0, false, 0.62); planLesson(); showPage();
 }
 function loadPosition(n, g) { game = g; newBoard(n, g); clearMarks(); }
@@ -433,7 +458,7 @@ function nextPage() {
 function startItems() { PL.tok++; PL.playing = false; lessonStep.phase = 'item'; lessonStep.item = 0; scriptRun++; busy = false; if (!lesson.items.length) return lessonDone(); showItem(); }
 function showItem() {
   const it = lesson.items[lessonStep.item]; stepPhase = 'item'; hideQuiz(); scriptRun++; busy = false; P = L.prepare(it); P.mist = 0; loadPosition(P.n, P.game); applyShow(P.show);
-  $('modeLabel').textContent = L.LEVELS[lesson.lv - 1].name + ' · ' + lesson.title + ' (' + (lessonStep.item + 1) + '/' + lesson.items.length + ')'; updateButtons();
+  $('modeLabel').textContent = chapLabel() + lesson.title + ' (' + (lessonStep.item + 1) + '/' + lesson.items.length + ')'; updateButtons();
   say(P.prompt, null, P.prompt); if (P.mode === 'quiz') showQuiz('item');
 }
 function retryItem() { if (stepPhase !== 'item' || !P || busy) return; O.unlock(); const it = lesson.items[lessonStep.item]; const keep = P.mist; P = L.prepare(it, { same: P.seed }); P.mist = keep; loadPosition(P.n, P.game); applyShow(P.show); say(P.prompt, null, false); if (P.mode === 'quiz') showQuiz('item'); }
@@ -479,12 +504,15 @@ async function itemDone(r) {
 }
 function lessonDone() {
   if (lesson.diag) { const rid0 = runId, d = diagResult(); over = true; stepPhase = 'done'; updateButtons(); hideQuiz(); say('진단이 끝났어요. ' + d.msg, 'good', d.msg);
-    const b0 = [{ label: '▶ ' + d.first.title + ' 수업 시작', color: 'green', onClick: () => startLesson(d.first.id) }, { label: '☰ 수업 목록', color: 'blue', onClick: () => openCurriculum() }];
-    setTimeout(() => { if (rid0 === runId) O.finish({ stats, entry: { at: new Date().toISOString(), lesson: LEARN_LESSON, subject: 'play', subjectName: '바둑', school: 'elem', topic: '3D 바둑 · 실력 진단 → ' + (d.okAll ? '전 단계 통과' : L.LEVELS[d.lvl - 1].name + ' 부터'), level: 1, engine: 'go-learn', rounds: lesson.items.length, mistakes: lessonStep.mistakes, glow: 0, hand: 0, asked: lessonStep.asked, sec: Math.round((Date.now() - stats.t0) / 1000) }, stars: d.okAll ? 3 : 2, title: '실력 진단 결과', text: d.msg + ' (틀린 단계 ' + Object.keys(lessonStep.bad).length + '개 / ' + lesson.items.length + '개 중)', speak: d.msg, mission: { lesson: 1 }, buttons: b0 }); }, 400); return; }
+    const b0 = [{ label: '▶ ' + d.first.title + ' 시작', color: 'green', onClick: () => startLesson(d.first.id) }, { label: '☰ 수업 목록', color: 'blue', onClick: () => openCurriculum() }];
+    setTimeout(() => { if (rid0 === runId) O.finish({ stats, entry: { at: new Date().toISOString(), lesson: LEARN_LESSON, subject: 'play', subjectName: '바둑', school: 'elem', topic: '3D 바둑 · 실력 진단 → ' + (d.okAll ? '전 단계 통과' : '제' + d.ch.no + '장부터'), level: 1, engine: 'go-learn', rounds: lesson.items.length, mistakes: lessonStep.mistakes, glow: 0, hand: 0, asked: lessonStep.asked, sec: Math.round((Date.now() - stats.t0) / 1000) }, stars: d.okAll ? 3 : 2, title: '실력 진단 결과', text: d.msg + ' (틀린 단계 ' + Object.keys(lessonStep.bad).length + '개 / ' + lesson.items.length + '개 중)', speak: d.msg, mission: { lesson: 1 }, buttons: b0 }); }, 400); return; }
+  if (lesson.exam) { const rid0 = runId, r = examResult(); over = true; stepPhase = 'done'; updateButtons(); hideQuiz(); say(r.msg, r.pass ? 'good' : 'warn', r.msg);
+    const bx = [{ label: '☰ 교재 목차', color: 'blue', onClick: () => openCurriculum() }]; if (!r.pass) bx.unshift({ label: '🔁 다시 도전', color: 'green', onClick: () => startExam(lesson.exam.id) });
+    setTimeout(() => { if (rid0 === runId) O.finish({ stats, entry: { at: new Date().toISOString(), lesson: LEARN_LESSON, subject: 'play', subjectName: '바둑', school: 'elem', topic: '바둑길 · 승급 시험 제' + lesson.exam.no + '장', level: 1, engine: 'go-learn', rounds: r.n, mistakes: lessonStep.mistakes, glow: 0, hand: 0, asked: lessonStep.asked, sec: Math.round((Date.now() - stats.t0) / 1000) }, stars: r.pass ? 3 : 1, title: r.pass ? '합격' : '불합격', text: r.msg + ' (' + r.right + '/' + r.n + ' 정답)', speak: r.msg, mission: { lesson: 1 }, buttons: bx }); }, 400); return; }
   const rid = runId, m = lessonStep.mistakes, n = Math.max(1, lesson.items.length), stars = m <= Math.max(1, n * 0.15) ? 3 : m <= n * 0.6 ? 2 : 1; over = true; stepPhase = 'done'; updateButtons(); hideQuiz();
   const prev = progress[lesson.id]; if (lesson.id !== 'wrong' && (!prev || prev.stars < stars)) progress[lesson.id] = { stars, at: Date.now() }; saveProg(); O.rememberLevel(LEARN_LESSON, lesson.lv);
   const entry = { at: new Date().toISOString(), lesson: LEARN_LESSON, subject: 'play', subjectName: '바둑', school: 'elem', topic: '3D 바둑 배우기 · ' + lesson.title, level: lesson.lv, engine: 'go-learn', rounds: n, mistakes: m, glow: 0, hand: 0, asked: lessonStep.asked, sec: Math.round((Date.now() - stats.t0) / 1000) };
-  const idx = L.LESSONS.indexOf(lesson), nxt = lesson.srcs ? null : L.LESSONS[idx + 1], me = lesson;
+  const flat = C.CHAPTERS.reduce((a, c) => a.concat(C.lessonsOf(c.id)), []), idx = flat.indexOf(lesson), nxt = lesson.srcs ? null : flat[idx + 1], me = lesson;
   const btns = []; if (nxt) btns.push({ label: '▶ 다음 수업: ' + nxt.title, color: 'green', onClick: () => startLesson(nxt.id) });
   if (me.play) btns.push({ label: me.play.strategy ? '🎯 전략 코치와 대국해 보기' : '⚫ 바로 대국해 보기', color: 'orange', onClick: () => startGame(Object.assign({ mode: 'play', n: 9, level: 1, color: 1, handicap: 0 }, me.play)) });
   if (me.guess != null) btns.push({ label: '🎯 프로 기보로 ' + SG.PHASES[me.guess].name + ' 맞히기', color: 'orange', onClick: () => startGuessPhase(me.guess) });
