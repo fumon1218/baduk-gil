@@ -48,8 +48,15 @@ const MODELS = [
   { id: 'jangsik', name: '장식반', sub: '조각 측면과 금테', T: 3.2, L: 1.7, legs: 'scallop', trim: 0xc9a24b, side: 'assets/side-carved.webp' },
   { id: 'najeon', name: '나전반', sub: '칠기 위 자개 장식', T: 2.2, L: 2.5, legs: 'arch', trim: 0xe8d9a8, side: 'assets/side-najeon.webp', top: 'assets/board-najeon.webp' },
 ];
+const BOWLS = [
+  { id: 'none', name: '없음' },
+  { id: 'jujube', name: '대추나무', img: 'assets/bowl-jujube.webp' },
+  { id: 'meokgam', name: '먹감나무', img: 'assets/bowl-meokgam.webp' },
+  { id: 'dragon', name: '용 조각', img: 'assets/bowl-dragon.webp' },
+  { id: 'urushi', name: '옻칠', img: 'assets/bowl-urushi.webp' },
+];
 const LOOK_KEY = 'baduk_look_v1';
-const look = (() => { try { return Object.assign({ board: 'kaya', scene: 'study', model: 'soban' }, JSON.parse(localStorage.getItem(LOOK_KEY) || '{}')); } catch (e) { return { board: 'kaya', scene: 'study', model: 'soban' }; } })();
+const look = (() => { try { return Object.assign({ board: 'kaya', scene: 'study', model: 'soban', bowl: 'jujube' }, JSON.parse(localStorage.getItem(LOOK_KEY) || '{}')); } catch (e) { return { board: 'kaya', scene: 'study', model: 'soban', bowl: 'jujube' }; } })();
 let SKIN = SKINS.find((k) => k.id === look.board) || SKINS[0];
 let MODEL = MODELS.find((k) => k.id === look.model) || MODELS[0];
 const imgCache = {};
@@ -88,8 +95,9 @@ function modelIcon(k) {
 function openLook() {
   document.querySelectorAll('.oks-overlay').forEach((x) => x.remove()); const ov = document.createElement('div'); ov.className = 'oks-overlay'; ov.style.zIndex = 90;
   const draw = () => {
-    ov.innerHTML = '<div class="ch-card go-look"><h2>판과 배경 고르기</h2><h4>판 모양</h4><div class="sw-row">' + MODELS.map((k) => '<button type="button" class="sw' + (k.id === look.model ? ' on' : '') + '" data-m="' + k.id + '"><i class="sw-model">' + modelIcon(k) + '</i><span>' + k.name + '</span></button>').join('') + '</div><h4>바둑판 재질</h4><div class="sw-row">' + SKINS.map((k) => '<button type="button" class="sw' + (k.id === look.board ? ' on' : '') + '" data-b="' + k.id + '"><i class="sw-board" style="background-color:' + k.base + ';background-image:url(' + k.img + ');--ln:' + k.line + '"></i><span>' + k.name + '</span></button>').join('') + '</div><h4>배경</h4><div class="sw-row">' + SCENES.map((k) => '<button type="button" class="sw' + (k.id === look.scene ? ' on' : '') + '" data-s="' + k.id + '"><i class="sw-scene" style="background:' + k.sw + '"></i><span>' + k.name + '</span></button>').join('') + '</div><p class="go-src">바둑에 방해되지 않도록 배경은 차분하게 만들었습니다. 설정은 이 기기에 저장됩니다.</p><div class="ch-row"><button type="button" class="ch-chip" id="lookClose">닫기</button></div></div>';
+    ov.innerHTML = '<div class="ch-card go-look"><h2>판과 배경 고르기</h2><h4>판 모양</h4><div class="sw-row">' + MODELS.map((k) => '<button type="button" class="sw' + (k.id === look.model ? ' on' : '') + '" data-m="' + k.id + '"><i class="sw-model">' + modelIcon(k) + '</i><span>' + k.name + '</span></button>').join('') + '</div><h4>바둑판 재질</h4><div class="sw-row">' + SKINS.map((k) => '<button type="button" class="sw' + (k.id === look.board ? ' on' : '') + '" data-b="' + k.id + '"><i class="sw-board" style="background-color:' + k.base + ';background-image:url(' + k.img + ');--ln:' + k.line + '"></i><span>' + k.name + '</span></button>').join('') + '</div><h4>돌통</h4><div class="sw-row">' + BOWLS.map((k) => '<button type="button" class="sw' + (k.id === look.bowl ? ' on' : '') + '" data-w="' + k.id + '"><i class="sw-scene" style="background:' + (k.img ? 'url(' + k.img + ') center/cover' : '#e8dfc8') + '"></i><span>' + k.name + '</span></button>').join('') + '</div><h4>배경</h4><div class="sw-row">' + SCENES.map((k) => '<button type="button" class="sw' + (k.id === look.scene ? ' on' : '') + '" data-s="' + k.id + '"><i class="sw-scene" style="background:' + k.sw + '"></i><span>' + k.name + '</span></button>').join('') + '</div><p class="go-src">바둑에 방해되지 않도록 배경은 차분하게 만들었습니다. 설정은 이 기기에 저장됩니다.</p><div class="ch-row"><button type="button" class="ch-chip" id="lookClose">닫기</button></div></div>';
     ov.querySelectorAll('[data-m]').forEach((b) => { b.onclick = () => { look.model = b.dataset.m; saveLook(); applyLook(); draw(); }; });
+    ov.querySelectorAll('[data-w]').forEach((b) => { b.onclick = () => { look.bowl = b.dataset.w; saveLook(); applyLook(); draw(); }; });
     ov.querySelectorAll('[data-b]').forEach((b) => { b.onclick = () => { look.board = b.dataset.b; saveLook(); applyLook(); draw(); }; });
     ov.querySelectorAll('[data-s]').forEach((b) => { b.onclick = () => { look.scene = b.dataset.s; saveLook(); applyLook(); draw(); }; });
     $('lookClose').onclick = () => { ov.remove(); $('menu').style.visibility = ''; };
@@ -111,6 +119,23 @@ function boardTexture(n) {
   pts.forEach(([a, b]) => { g.beginPath(); g.arc(P(a), P(b), r, 0, 7); g.fill(); });
   return canvasTexture(c, 8);
 }
+const bowlGroup = new THREE.Group(); scene.add(bowlGroup);
+function buildBowls(floorDepth) {
+  while (bowlGroup.children.length) bowlGroup.children.pop();
+  const bw = BOWLS.find((q) => q.id === look.bowl); if (!bw || bw.id === 'none') return;
+  const R = Math.min(2.3, HALF * 0.26), H = R * 1.05, mat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.38, metalness: bw.id === 'urushi' ? 0.2 : 0 });
+  const im = getImg(bw.img, () => { if (look.bowl === bw.id) buildBoard(N); }); if (im) { const t = new THREE.Texture(im); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; t.needsUpdate = true; mat.map = t; } else mat.color.set(0x8a5a2b);
+  const body = new THREE.LatheGeometry([[0.01, 0], [R * 0.7, 0], [R * 0.95, H * 0.2], [R * 1.02, H * 0.5], [R * 0.9, H * 0.82], [R * 0.78, H]].map(([x, y]) => new THREE.Vector2(x, y)), 28);
+  const lid = new THREE.LatheGeometry([[0.01, H * 0.28], [R * 0.74, H * 0.2], [R * 0.86, 0], [R * 0.7, -H * 0.04], [0.01, -H * 0.04]].map(([x, y]) => new THREE.Vector2(x, y)), 28);
+  const knobMat = new THREE.MeshStandardMaterial({ color: 0xb08d3c, metalness: 0.8, roughness: 0.35 });
+  [[1, 0xf2f0ea], [-1, 0x1c1c20]].forEach(([c, col], i) => {
+    const g = new THREE.Group(), b = new THREE.Mesh(body, mat); b.castShadow = true; b.receiveShadow = true; g.add(b);
+    const pile = new THREE.Mesh(new THREE.CylinderGeometry(R * 0.7, R * 0.7, H * 0.08, 24), new THREE.MeshStandardMaterial({ color: col, roughness: 0.3 })); pile.position.y = H * 0.9; g.add(pile);
+    const l = new THREE.Mesh(lid, mat); l.castShadow = true; l.position.set(R * 0.9, H * 1.02, R * 0.25); l.rotation.set(0.1, 0, -0.38); g.add(l);
+    const k = new THREE.Mesh(new THREE.SphereGeometry(R * 0.09, 12, 10), knobMat); k.position.set(R * 0.9 + Math.sin(0.38) * H * 0.28 * 0.9, H * 1.02 + H * 0.3, R * 0.25); g.add(k);
+    g.position.set(HALF + R * 1.9, -floorDepth, (i ? 1 : -1) * R * 1.35); bowlGroup.add(g);
+  });
+}
 function buildBoard(n) {
   layout(n); while (boardGroup.children.length) { const m = boardGroup.children.pop(); if (m.geometry) m.geometry.dispose(); }
   if (boardTex) boardTex.dispose(); boardTex = boardTexture(n); topMat.map = boardTex; topMat.needsUpdate = true;
@@ -124,6 +149,7 @@ function buildBoard(n) {
   else if (M.legs === 'arch') { corners.forEach(([a, b]) => addLeg(new THREE.BoxGeometry(HALF * 0.09, L, HALF * 0.09), a * HALF * 0.93, -T - L / 2, b * HALF * 0.93)); addLeg(new THREE.BoxGeometry(2 * HALF * 1.06, 0.14, 2 * HALF * 1.06), 0, -T - L + 0.07, 0); }
   if (M.trim) { const tm = new THREE.MeshStandardMaterial({ color: M.trim, metalness: 0.7, roughness: 0.3 }), w = 0.2; [[0, 1], [0, -1]].forEach(([, b]) => { const e = new THREE.Mesh(new THREE.BoxGeometry(2 * HALF + 0.05, 0.1, w), tm); e.position.set(0, -0.05, b * (HALF - w / 2)); boardGroup.add(e); }); [-1, 1].forEach((a) => { const e = new THREE.Mesh(new THREE.BoxGeometry(w, 0.1, 2 * HALF + 0.05), tm); e.position.set(a * (HALF - w / 2), -0.05, 0); boardGroup.add(e); const band = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.16, 2 * HALF + 0.08), tm); band.position.set(a * HALF, -T * 0.5, 0); boardGroup.add(band); }); }
   if (floorMesh) floorMesh.position.y = -(T + L);
+  buildBowls(T + L);
   S.setExtent(1.66 * HALF); fitFloor(); poke(400);
 }
 
