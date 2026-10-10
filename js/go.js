@@ -404,7 +404,8 @@ function finishScoring() {
   const rid = runId, sc = game.score([...deadSet], cfg.komi); lastScore = sc; scoring = false; over = true; hideQuiz(); updateButtons(); showDead();
   const w = sc.winner, margin = Math.abs(sc.diff), human = mode === 'two' ? 0 : cfg.color, humanWon = mode === 'two' || w === human;
   const title = mode === 'two' ? colName(w) + ' ' + margin.toFixed(1).replace('.0', '') + '집 승!' : humanWon ? '이겼어요! ' + margin.toFixed(1).replace('.0', '') + '집 차이' : '아쉬워요. ' + margin.toFixed(1).replace('.0', '') + '집 차이로 졌어요';
-  const text = '⚫ 흑 ' + sc.black + '집 (집 ' + sc.terrB + ' + 따낸 돌 ' + (sc.capsB + sc.deadW) + ') · ⚪ 백 ' + sc.white + '집 (집 ' + sc.terrW + ' + 따낸 돌 ' + (sc.capsW + sc.deadB) + ' + 덤 ' + sc.komi + ')';
+  const text = (rnote ? '🏅' + rnote + ' ' : '') + '⚫ 흑 ' + sc.black + '집 (집 ' + sc.terrB + ' + 따낸 돌 ' + (sc.capsB + sc.deadW) + ') · ⚪ 백 ' + sc.white + '집 (집 ' + sc.terrW + ' + 따낸 돌 ' + (sc.capsW + sc.deadB) + ' + 덤 ' + sc.komi + ')';
+  let rnote = ''; if (mode === 'play' && cfg.ranked) rnote = rankedResult(humanWon);
   const stars = humanWon ? 3 : margin <= 10 ? 2 : 1, speak = humanWon ? '이겼어요! 정말 잘했어요!' : '아쉽지만 끝까지 잘했어요. 한 번 더 해 볼까요?';
   if (mode === 'play') lastPlayed = { hist: game.stack.map((r) => (r.pass ? -1 : r.s)), n: N, hc: game.handicap, color: cfg.color, level: cfg.level, komi: cfg.komi };
   say(title, humanWon ? 'good' : null, false);
@@ -539,13 +540,23 @@ function diagResult() {
   const ch = okAll ? C.CHAPTERS[8] : C.CHAPTERS.find((c) => c.id === ps[at].ch), ci = C.CHAPTERS.indexOf(ch);
   const list = C.lessonsOf(ch.id), first = list.find((l) => !progress[l.id]) || list[0];
   const got = okAll ? C.CHAPTERS[8].rank : (ci > 0 ? C.CHAPTERS[ci - 1].rank : C.START_RANK); setRank(got);
-  const msg = okAll ? '모든 장의 문제를 잘 풀었습니다. 현재 급수는 ' + C.rankName(got) + '로 시작합니다. 대국과 기보 감상으로 실력을 다지십시오.' : '현재 급수는 ' + C.rankName(got) + '로 시작합니다. 제' + ch.no + '장 「' + ch.title + '」부터 공부하시면 좋습니다.';
+  const msg = okAll ? '모든 장의 문제를 잘 풀었습니다. 현재 급수는 ' + C.rankName(got) + '으로 시작합니다. 대국과 기보 감상으로 실력을 다지십시오.' : '현재 급수는 ' + C.rankName(got) + '으로 시작합니다. 제' + ch.no + '장 「' + ch.title + '」부터 공부하시면 좋습니다.';
   return { msg, first, ch, okAll };
 }
 /* ---------- 급수와 승급 시험 (앱 자체 기준이며 공식 급수가 아닙니다) ---------- */
 const C = window.OKS_GO_CURR, RANK_KEY = 'baduk_rank_v1';
 const loadRank = () => { try { return JSON.parse(localStorage.getItem(RANK_KEY)) || { rank: C.START_RANK, exams: {} }; } catch (e) { return { rank: C.START_RANK, exams: {} }; } };
 function setRank(r) { const d = loadRank(); if (r < d.rank) { d.rank = r; try { localStorage.setItem(RANK_KEY, JSON.stringify(d)); } catch (e) {} } return d.rank; }
+const rankPlan = (r) => ({ n: r >= 21 ? 9 : r >= 13 ? 13 : 19, level: r >= 26 ? 1 : r >= 22 ? 2 : r >= 16 ? 3 : r >= 10 ? 4 : 5 });
+function rankedResult(won) {   // 급수 대국: 2연승하면 한 급 승급(다음 장 시험 급수 직전까지만, 그 이상은 승급 시험으로)
+  const d = loadRank(); d.g = d.g || { w: 0, l: 0, streak: 0 }; let note = '';
+  if (won) { d.g.w++; d.g.streak++; } else { d.g.l++; d.g.streak = 0; }
+  if (won && d.g.streak >= 2) {
+    const nxt = (C.CHAPTERS.find((c) => c.rank < d.rank) || {}).rank || 0;
+    if (d.rank - 1 > nxt) { d.rank--; d.g.streak = 0; note = ' 급수 대국 2연승으로 ' + C.rankName(d.rank) + '로 승급했습니다!'; } else { note = ' 더 올라가려면 교재의 승급 시험에 합격해야 합니다.'; }
+  } else if (won) note = ' 한 번 더 이기면 승급합니다.';
+  try { localStorage.setItem(RANK_KEY, JSON.stringify(d)); } catch (e) {} return note;
+}
 function startExam(chId) {
   const ch = C.CHAPTERS.find((c) => c.id === chId), pool = [];
   C.lessonsOf(chId).forEach((l) => l.items.forEach((it, idx) => pool.push({ lid: l.id, idx, it })));
@@ -558,7 +569,7 @@ function examResult() {
   const d = loadRank(); const ex = d.exams[ch.id] || { best: 0 }; ex.best = Math.max(ex.best, right); ex.of = n; d.exams[ch.id] = ex; try { localStorage.setItem(RANK_KEY, JSON.stringify(d)); } catch (e) {}
   if (pass) setRank(ch.rank);
   const now = loadRank().rank;
-  const msg = pass ? (now < before ? C.rankName(now) + '로 승급했습니다. 축하드립니다.' : '합격입니다. 현재 급수 ' + C.rankName(now) + '를 유지합니다.') : '아쉽게도 합격 기준(70%)에 미치지 못했습니다. 틀린 문제는 오답노트에 담았으니 복습하고 다시 도전하십시오.';
+  const msg = pass ? (now < before ? C.rankName(now) + '으로 승급했습니다. 축하드립니다.' : '합격입니다. 현재 급수 ' + C.rankName(now) + '를 유지합니다.') : '아쉽게도 합격 기준(70%)에 미치지 못했습니다. 틀린 문제는 오답노트에 담았으니 복습하고 다시 도전하십시오.';
   return { pass, right, n, msg };
 }
 function chapLabel() { if (!lesson || lesson.srcs) return ''; const c = C.chapterOf(lesson.id); return c ? '제' + c.no + '장 · ' : ''; }
@@ -761,6 +772,7 @@ function openMenu(fromFinish) {
       opt = '<div class="ch-row"><label>판 크기</label>' + [9, 13, 19].map((n) => chip('n', n, n + '줄', n === 9 ? '처음이라면' : n === 13 ? '중간' : '정식', sel.n === n)).join('') + '</div>';
       if (sel.mode === 'play') opt += '<div class="ch-row"><label>컴퓨터 수준</label>' + [1, 2, 3, 4, 5].map((l) => chip('plv', l, l, LEVEL_NAME[l], sel.playLv === l)).join('') + '</div><div class="ch-row"><label>내 돌</label>' + chip('color', 1, '⚫ 흑', '먼저 시작', sel.color === 1) + chip('color', -1, '⚪ 백', '나중에', sel.color === -1) + '</div>' +
         '<div class="ch-row"><label>접바둑(흑 돌 미리 놓기)</label>' + [0, 2, 3, 4, 5, 6, 7, 8, 9].filter((h) => h <= mh).map((h) => chip('hc', h, h ? h + '점' : '없음', '', sel.handicap === h)).join('') + '</div>';
+      if (sel.mode === 'play') { const rk = loadRank(), pl = rankPlan(rk.rank), gg = rk.g || { w: 0, l: 0, streak: 0 }; opt += '<div class="ch-row"><label>🏅 급수 대국</label><button type="button" class="ch-chip on" id="rankedBtn">' + C.rankName(rk.rank) + '에 맞춰 시작<small>' + pl.n + '줄 · 수준 ' + pl.level + ' · ' + gg.w + '승 ' + gg.l + '패 · 2연승하면 승급</small></button></div>'; }
       opt += '<div class="ch-row"><label>🎯 전략 코치</label>' + chip('strat', 1, '켜기', '단계별 안내', sel.strategy) + chip('strat', 0, '끄기', '', !sel.strategy) + '</div>';
       if (sel.mode === 'play' && sel.handicap && sel.color < 0) opt += '<p class="why">접바둑은 약한 쪽이 흑을 잡아요. 내가 흑일 때 돌을 미리 놓고 시작해요.</p>';
     }
@@ -773,6 +785,7 @@ function openMenu(fromFinish) {
     el.querySelectorAll('[data-color]').forEach((b) => { b.onclick = () => { sel.color = +b.dataset.color; render(); }; });
     el.querySelectorAll('[data-hc]').forEach((b) => { b.onclick = () => { sel.handicap = +b.dataset.hc; render(); }; });
     el.querySelectorAll('[data-strat]').forEach((b) => { b.onclick = () => { sel.strategy = +b.dataset.strat === 1; render(); }; });
+    if ($('rankedBtn')) $('rankedBtn').onclick = () => { O.unlock(); const pl = rankPlan(loadRank().rank); el.hidden = true; startGame({ mode: 'play', n: pl.n, level: pl.level, color: 1, handicap: 0, ranked: true }); };
     $('wordsBtn').onclick = showWords; $('lookBtn').onclick = openLook; const cm = $('closeMenu'); if (cm) cm.onclick = () => { el.hidden = true; };
     $('goBtn').onclick = () => { O.unlock(); Object.assign(prefs, { mode: sel.mode, n: sel.n, color: sel.color, handicap: sel.handicap, strategy: sel.strategy }); savePrefs();
       if (sel.mode === 'learn') openCurriculum();
@@ -898,7 +911,7 @@ S.onFrame((dt, t) => { const k = 1 + Math.sin(t * 5) * 0.1; markPool.forEach((m)
 })();
 
 /* 시험용 손잡이 */
-window.__go = {
+window.__go = { rankedResult: (w) => rankedResult(w), rankPlan,
   game: () => game, mode: () => mode, over: () => over, busy: () => busy, scoring: () => scoring, prep: () => P, lesson: () => lesson, step: () => lessonStep, stoneCount: () => stones.size, n: () => N, dead: () => [...deadSet],
   tap: (s) => (mode === 'learn' ? lessonTap(s) : mode === 'guess' ? guessTap(s) : humanTap(s)), guessState: () => G, wrong: () => loadWrong(), answer: lessonAnswer, start: startGame, startLesson, openMenu, mistakes: startMistakes, setLast: (x) => { lastPlayed = x; }, openCurriculum, nextPage, marks, finishScoring, progress,
   startDiag, startReview, showReport, safeReport, startKibo, startGuessPhase, allGames, showWords, lessonHint,
