@@ -25,7 +25,7 @@ GitHub Pages: 저장소 Settings → Pages → Branch `main` / `(root)` 로 켜�
 `node scripts/go-strategy-test.mjs` — 수업 정답을 규칙 엔진으로 다시 계산하고, 기보 팩이 모두 규칙대로 두어지는지 확인합니다.
 
 ## 기보 출처
-`js/games-pack.js`의 기보 140판은 [CWI Database of Go Games](https://homepages.cwi.nl/~aeb/go/games/)(제작자가 퍼블릭 도메인으로 표기)에서 골랐습니다. 다시 만들려면 `node scripts/go-pack-gen.mjs <games 폴더>`. 널리 배포하기 전에 제작자(aeb@cwi.nl)에게 재배포 가능 여부를 한 번 확인해 주세요.
+`js/games-pack.js`의 기보 140판은 [CWI Database of Go Games](https://homepages.cwi.nl/~aeb/go/games/)(제작자가 퍼블릭 도메인으로 표기)에서 골랐습니다. 다시 만들려면 `node scripts/go-pack-gen.mjs <games 폴더>`. 해당 페이지에 "I do not claim any rights on this collection. The games here are in the public domain."이라고 밝혀져 있어(2026-10 확인) 재배포에 제약이 없습니다. 그래도 공개 전 예의상 제작자(aeb@cwi.nl)에게 사용 사실을 알리면 좋습니다. 앱 안의 출처 표기는 유지해 주세요.
 
 
 `node scripts/export-review.mjs > review.csv` — 모든 강의 본문을 표로 뽑아 전문가 검수에 씁니다.
