@@ -24,23 +24,28 @@ const topMat = new THREE.MeshStandardMaterial({ roughness: 0.55 });
 let boardTex = null, boardMesh = null;
 /* ---------- 판 모양 · 배경 고르기 (바둑에 방해되지 않는 차분한 배경만) ---------- */
 const SKINS = [
-  { id: 'kaya', name: '카야(기본)', base: '#e0ac5c', line: '#3a2a14', star: '#2b1d0e', side: '#c58f42' },
-  { id: 'bija', name: '비자', base: '#ecc87a', line: '#4a3418', star: '#33220f', side: '#d6a850' },
-  { id: 'bamboo', name: '대나무', base: '#d9cc8c', line: '#403a1c', star: '#2d2812', side: '#b9aa66' },
-  { id: 'walnut', name: '호두', base: '#b98650', line: '#241609', star: '#160d05', side: '#8c5f32' },
-  { id: 'slate', name: '석판', base: '#a3abb2', line: '#2a3036', star: '#1c2126', side: '#7c858d' },
+  { id: 'kaya', name: '카야(기본)', base: '#e0ac5c', line: '#3a2a14', star: '#2b1d0e', side: '#c58f42', img: 'assets/board-kaya.webp' },
+  { id: 'bija', name: '비자', base: '#ecc87a', line: '#4a3418', star: '#33220f', side: '#d6a850', img: 'assets/board-bija.webp' },
+  { id: 'bamboo', name: '대나무', base: '#d9cc8c', line: '#403a1c', star: '#2d2812', side: '#b9aa66', img: 'assets/board-bamboo.webp' },
+  { id: 'walnut', name: '호두', base: '#b98650', line: '#150b04', star: '#0d0702', side: '#8c5f32', img: 'assets/board-walnut.webp' },
+  { id: 'cheonggang', name: '청강석', base: '#5c6670', line: '#dfe5ec', star: '#eef2f6', side: '#4a535c', img: 'assets/board-cheonggang.webp' },
+  { id: 'cheonggang-light', name: '청강석(연)', base: '#8a9db0', line: '#18222c', star: '#101820', side: '#6f8296', img: 'assets/board-cheonggang-light.webp' },
+  { id: 'cheonggang-deep', name: '청강석(심)', base: '#3f4a5a', line: '#e3e9f0', star: '#f2f5f8', side: '#323b49', img: 'assets/board-cheonggang-deep.webp' },
+  { id: 'slate', name: '석판', base: '#a3abb2', line: '#2a3036', star: '#1c2126', side: '#7c858d', img: 'assets/board-slate.webp' },
 ];
 const SCENES = [
   { id: 'study', name: '서재', sky: ['#4b3b27', '#4b3b27'], floor: 0x33402f, fog: 0x4b3b27, sw: 'linear-gradient(#4b3b27,#33402f)' },
-  { id: 'mountain', name: '산 위', sky: ['#8dbbe6', '#e6f0f8'], floor: 0xa9a79d, fog: 0xdbe7f1, deco: 'mountain', sw: 'linear-gradient(#8dbbe6,#dbe7f1 55%,#a9a79d 56%)' },
-  { id: 'sea', name: '바다 위', sky: ['#78b4d8', '#d6edf4'], floor: 0x7a5c3a, fog: 0x5b97b5, deco: 'sea', sw: 'linear-gradient(#78b4d8,#d6edf4 45%,#2f7fa3 46%,#1d5d82)' },
-  { id: 'sky', name: '하늘 위', sky: ['#4f8fd8', '#cfe5fb'], floor: 0xf2f5fb, fog: 0xe3edf9, deco: 'cloud', sw: 'linear-gradient(#4f8fd8,#cfe5fb 60%,#f2f5fb 61%)' },
-  { id: 'night', name: '달밤', sky: ['#0d1a33', '#2a3b66'], floor: 0x2b3550, fog: 0x1f2c4b, deco: 'night', sw: 'linear-gradient(#0d1a33,#2a3b66 60%,#2b3550 61%)' },
+  { id: 'mountain', img: 'assets/bg-mountain.webp', name: '산 위', sky: ['#8dbbe6', '#e6f0f8'], floor: 0xa9a79d, fog: 0xdbe7f1, deco: 'mountain', sw: 'linear-gradient(#8dbbe6,#dbe7f1 55%,#a9a79d 56%)' },
+  { id: 'sea', img: 'assets/bg-sea.webp', name: '바다 위', sky: ['#78b4d8', '#d6edf4'], floor: 0x7a5c3a, fog: 0x5b97b5, deco: 'sea', sw: 'linear-gradient(#78b4d8,#d6edf4 45%,#2f7fa3 46%,#1d5d82)' },
+  { id: 'sky', img: 'assets/bg-sky.webp', name: '하늘 위', sky: ['#4f8fd8', '#cfe5fb'], floor: 0xf2f5fb, fog: 0xe3edf9, deco: 'cloud', sw: 'linear-gradient(#4f8fd8,#cfe5fb 60%,#f2f5fb 61%)' },
+  { id: 'night', img: 'assets/bg-night.webp', name: '달밤', sky: ['#0d1a33', '#2a3b66'], floor: 0x2b3550, fog: 0x1f2c4b, deco: 'night', sw: 'linear-gradient(#0d1a33,#2a3b66 60%,#2b3550 61%)' },
   { id: 'calm', name: '고요(단색)', sky: ['#2c2c31', '#2c2c31'], floor: 0x3a3a41, fog: 0x2c2c31, sw: 'linear-gradient(#2c2c31,#3a3a41)' },
 ];
 const LOOK_KEY = 'baduk_look_v1';
 const look = (() => { try { return Object.assign({ board: 'kaya', scene: 'study' }, JSON.parse(localStorage.getItem(LOOK_KEY) || '{}')); } catch (e) { return { board: 'kaya', scene: 'study' }; } })();
 let SKIN = SKINS.find((k) => k.id === look.board) || SKINS[0];
+const imgCache = {};
+function getImg(src, done) { let im = imgCache[src]; if (!im) { im = imgCache[src] = new Image(); im.cbs = []; im.onload = () => { im.ok = true; const l = im.cbs; im.cbs = []; l.forEach((f) => f()); }; im.onerror = () => { im.bad = true; }; im.src = src; } if (!im.ok && done) im.cbs.push(done); return im.ok ? im : null; }
 function sceneTexture(sc) {
   const W = 1024, H = 1024, c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d');
   const gr = g.createLinearGradient(0, 0, 0, H * 0.75); gr.addColorStop(0, sc.sky[0]); gr.addColorStop(1, sc.sky[1]); g.fillStyle = gr; g.fillRect(0, 0, W, H);
@@ -54,18 +59,21 @@ function sceneTexture(sc) {
 }
 const floorMesh = scene.children.find((o) => o.geometry && o.geometry.type === 'CircleGeometry'); const fitFloor = () => { if (floorMesh) floorMesh.scale.setScalar(HALF * 1.9 / floorMesh.geometry.parameters.radius); };
 let bgTex = null;
+function fitBg() { const t = bgTex; if (!t || !t.userData.ar) return; const cv = $('gl'), va = (cv.clientWidth || 1) / (cv.clientHeight || 1), ia = t.userData.ar; if (va > ia) { t.repeat.set(1, ia / va); t.offset.set(0, (1 - ia / va) / 2); } else { t.repeat.set(va / ia, 1); t.offset.set((1 - va / ia) / 2, 0); } t.updateMatrix(); poke(300); }
+window.addEventListener('resize', fitBg);
 function applyLook() {
   const sc = SCENES.find((q) => q.id === look.scene) || SCENES[0];
-  if (bgTex) bgTex.dispose(); bgTex = sceneTexture(sc); scene.background = bgTex; scene.fog.color.setHex(sc.fog); if (floorMesh) floorMesh.material.color.setHex(sc.floor);
+  if (bgTex) bgTex.dispose(); bgTex = sceneTexture(sc); scene.background = bgTex;
+  if (sc.img) { const sref = sc, im = getImg(sc.img, () => { if (look.scene === sref.id) applyLook(); }); if (im) { bgTex.dispose(); bgTex = new THREE.Texture(im); bgTex.colorSpace = THREE.SRGBColorSpace; bgTex.needsUpdate = true; bgTex.wrapS = bgTex.wrapT = THREE.ClampToEdgeWrapping; bgTex.userData.ar = im.width / im.height; scene.background = bgTex; fitBg(); } } scene.fog.color.setHex(sc.fog); if (floorMesh) floorMesh.material.color.setHex(sc.floor);
   SKIN = SKINS.find((k) => k.id === look.board) || SKINS[0];
-  if (sideMat.map) sideMat.map.dispose(); sideMat.map = canvasTexture(woodCanvas(256, 96, SKIN.side, 21)); sideMat.needsUpdate = true;
+  if (sideMat.map) sideMat.map.dispose(); { const c = woodCanvas(256, 96, SKIN.side, 21), simg = SKIN.img && getImg(SKIN.img, () => { applyLook(); }); if (simg) { const g = c.getContext('2d'); g.drawImage(simg, 0, 0, 256, 96); g.fillStyle = 'rgba(0,0,0,.28)'; g.fillRect(0, 0, 256, 96); } sideMat.map = canvasTexture(c); sideMat.needsUpdate = true; }
   if (boardMesh) buildBoard(N); poke(500);
 }
 function saveLook() { try { localStorage.setItem(LOOK_KEY, JSON.stringify(look)); } catch (e) {} }
 function openLook() {
   document.querySelectorAll('.oks-overlay').forEach((x) => x.remove()); const ov = document.createElement('div'); ov.className = 'oks-overlay'; ov.style.zIndex = 90;
   const draw = () => {
-    ov.innerHTML = '<div class="ch-card go-look"><h2>판과 배경 고르기</h2><h4>바둑판</h4><div class="sw-row">' + SKINS.map((k) => '<button type="button" class="sw' + (k.id === look.board ? ' on' : '') + '" data-b="' + k.id + '"><i class="sw-board" style="background-color:' + k.base + ';--ln:' + k.line + '"></i><span>' + k.name + '</span></button>').join('') + '</div><h4>배경</h4><div class="sw-row">' + SCENES.map((k) => '<button type="button" class="sw' + (k.id === look.scene ? ' on' : '') + '" data-s="' + k.id + '"><i class="sw-scene" style="background:' + k.sw + '"></i><span>' + k.name + '</span></button>').join('') + '</div><p class="go-src">바둑에 방해되지 않도록 배경은 차분하게 만들었습니다. 설정은 이 기기에 저장됩니다.</p><div class="ch-row"><button type="button" class="ch-chip" id="lookClose">닫기</button></div></div>';
+    ov.innerHTML = '<div class="ch-card go-look"><h2>판과 배경 고르기</h2><h4>바둑판</h4><div class="sw-row">' + SKINS.map((k) => '<button type="button" class="sw' + (k.id === look.board ? ' on' : '') + '" data-b="' + k.id + '"><i class="sw-board" style="background-color:' + k.base + ';background-image:url(' + k.img + ');--ln:' + k.line + '"></i><span>' + k.name + '</span></button>').join('') + '</div><h4>배경</h4><div class="sw-row">' + SCENES.map((k) => '<button type="button" class="sw' + (k.id === look.scene ? ' on' : '') + '" data-s="' + k.id + '"><i class="sw-scene" style="background:' + k.sw + '"></i><span>' + k.name + '</span></button>').join('') + '</div><p class="go-src">바둑에 방해되지 않도록 배경은 차분하게 만들었습니다. 설정은 이 기기에 저장됩니다.</p><div class="ch-row"><button type="button" class="ch-chip" id="lookClose">닫기</button></div></div>';
     ov.querySelectorAll('[data-b]').forEach((b) => { b.onclick = () => { look.board = b.dataset.b; saveLook(); applyLook(); draw(); }; });
     ov.querySelectorAll('[data-s]').forEach((b) => { b.onclick = () => { look.scene = b.dataset.s; saveLook(); applyLook(); draw(); }; });
     $('lookClose').onclick = () => { ov.remove(); $('menu').style.visibility = ''; };
@@ -77,7 +85,8 @@ const wx = (s) => ((s % N) - (N - 1) / 2) * SP, wz = (s) => (((s / N) | 0) - (N 
 const STARS = { 19: [3, 9, 15], 13: [3, 6, 9] };
 function layout(n) { N = n; SP = Math.min(2.4, 17 / (n - 1)); HW = (n - 1) * SP / 2; EDGE = SP * 0.95 + 0.5; HALF = HW + EDGE; STONE_D = SP * 0.96; REST = 0.2 * STONE_D * 0.9; }
 function boardTexture(n) {
-  const px = 1536, c = woodCanvas(px, px, SKIN.base, 33), g = c.getContext('2d'), k = px / (2 * HALF), P = (i) => ((i - (n - 1) / 2) * SP + HALF) * k;
+  const px = 1536, c = woodCanvas(px, px, SKIN.base, 33), g = c.getContext('2d'), sk = SKIN, simg = sk.img && getImg(sk.img, () => { if (boardMesh && SKIN === sk) buildBoard(N); }); if (simg) g.drawImage(simg, 0, 0, px, px);
+  const k = px / (2 * HALF), P = (i) => ((i - (n - 1) / 2) * SP + HALF) * k;
   g.strokeStyle = SKIN.line; g.lineWidth = n >= 19 ? 2.4 : 3; g.beginPath();
   for (let i = 0; i < n; i++) { g.moveTo(P(i), P(0)); g.lineTo(P(i), P(n - 1)); g.moveTo(P(0), P(i)); g.lineTo(P(n - 1), P(i)); }
   g.stroke(); g.lineWidth = 5; g.strokeRect(P(0), P(0), P(n - 1) - P(0), P(n - 1) - P(0));

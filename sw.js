@@ -1,9 +1,21 @@
 /* 바둑길 서비스 워커 — 처음 한 번 받아 두면 인터넷 없이도 열려요. 파일을 바꾸면 CACHE 이름을 올려 주세요. */
-var CACHE = 'baduk-v4';
+var CACHE = 'baduk-v6';
 var FILES = [
 "./",
 "./assets/pieces.mp3",
 "./assets/hero.webp",
+"./assets/board-kaya.webp",
+"./assets/board-cheonggang.webp",
+"./assets/board-cheonggang-light.webp",
+"./assets/board-cheonggang-deep.webp",
+"./assets/board-bija.webp",
+"./assets/board-bamboo.webp",
+"./assets/board-walnut.webp",
+"./assets/board-slate.webp",
+"./assets/bg-mountain.webp",
+"./assets/bg-sea.webp",
+"./assets/bg-sky.webp",
+"./assets/bg-night.webp",
 "./assets/bg-wood.webp",
 "./assets/ch1.webp",
 "./assets/ch2.webp",
@@ -29,6 +41,7 @@ var FILES = [
 "./assets/stones.glb",
 "./css/app.css",
 "./icons/icon-192.png",
+"./icons/apple-touch-icon.png",
 "./icons/icon-512.png",
 "./index.html",
 "./js/ai-worker.js",

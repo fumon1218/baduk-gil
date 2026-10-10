@@ -154,6 +154,7 @@ body.chess-page{background:#1c140d url(../assets/bg-wood.webp) center/cover fixe
 .oks-overlay .ch-card{max-width:760px;width:100%}
 .sw-row{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:6px 0 14px}
 .sw{appearance:none;border:2px solid #d9ccae;background:#fff;border-radius:10px;padding:6px;font:inherit;color:#2a2018;cursor:pointer;width:92px}.sw.on{border-color:#7a5c2e;box-shadow:0 0 0 2px #d9bf86}
-.sw i{display:block;height:54px;border-radius:6px;border:1px solid rgba(0,0,0,.2)}.sw-board{background-image:repeating-linear-gradient(90deg,transparent 0 10px,var(--ln) 10px 11px),repeating-linear-gradient(0deg,transparent 0 10px,var(--ln) 10px 11px)!important;}
+.sw i{display:block;height:54px;border-radius:6px;border:1px solid rgba(0,0,0,.2)}
 .sw span{display:block;font-size:13px;margin-top:4px}
 .go-look h4{margin:10px 0 2px;color:#7a5c2e}
+.sw-board{position:relative;background-size:cover;background-position:center}.sw-board::after{content:'';position:absolute;inset:0;border-radius:6px;background-image:repeating-linear-gradient(90deg,transparent 0 10px,var(--ln) 10px 11px),repeating-linear-gradient(0deg,transparent 0 10px,var(--ln) 10px 11px);opacity:.75}
