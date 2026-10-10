@@ -2,7 +2,7 @@
 import { createRequire } from 'module'; import path from 'path'; import { fileURLToPath } from 'url';
 const require = createRequire(import.meta.url), dir = path.join(path.dirname(fileURLToPath(import.meta.url)), '../js');
 globalThis.window = globalThis;
-for (const f of ['engine.js', 'lessons-solved.js', 'lessons.js', 'lessons-l1.js', 'lessons-l2.js', 'lessons-l3.js', 'lessons-l4.js', 'lessons-prac.js', 'lessons-problems.js', 'lessons-life.js', 'lessons-sahwal.js', 'lessons-joseki.js', 'lessons-eval.js', 'strategy.js', 'lessons-strategy.js', 'lessons-strategy2.js', 'lessons-lecture.js', 'tone.js', 'curriculum.js']) require(path.join(dir, f));
+for (const f of ['engine.js', 'lessons-solved.js', 'lessons.js', 'lessons-l1.js', 'lessons-l2.js', 'lessons-l3.js', 'lessons-l4.js', 'lessons-prac.js', 'lessons-problems.js', 'lessons-life.js', 'lessons-sahwal.js', 'lessons-tactics.js', 'lessons-joseki.js', 'lessons-eval.js', 'strategy.js', 'lessons-strategy.js', 'lessons-strategy2.js', 'lessons-lecture.js', 'tone.js', 'curriculum.js']) require(path.join(dir, f));
 const L = globalThis.OKS_GO_LESSONS, C = globalThis.OKS_GO_CURR, q = (v) => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
 const out = [['장', '강 ID', '강 제목', '구분', '쪽/문항', '내용', '검수 의견'].map(q).join(',')];
 C.CHAPTERS.forEach((c) => C.lessonsOf(c).forEach((l) => {

@@ -32,3 +32,6 @@ GitHub Pages: 저장소 Settings → Pages → Branch `main` / `(root)` 로 켜�
 
 ## 궁도 사활 수업
 `scripts/sahwal-gen.mjs`(오래 걸림)가 3~6궁 눈 모양을 엔진 풀이기로 검증해 `scripts/sahwal-all.json`에 저장하고, `scripts/sahwal-build.mjs`가 거기서 수업 3개(sh-g1~g3, 문제 33개)를 골라 `js/lessons-sahwal.js`를 만듭니다. 정답은 모두 풀이기 결과와 일치합니다.
+
+## 먹여치기 수업
+`scripts/sahwal-tactics.mjs`(오래 걸림)가 바깥이 막힌 작은 구역에서 무작위로 모양을 만들고, 엔진 풀이기로 "흑이 먼저 두어 잡는 수가 하나뿐이고 그 수가 단수 자리(먹여치기)"인 모양만 `scripts/sahwal-tactics.json`에 모읍니다. `scripts/sahwal-build2.mjs`가 거기서 수업 2개(sh-t1 잡기, sh-t2 막고 살기, 문제 20개)를 골라 `js/lessons-tactics.js`를 만듭니다.
