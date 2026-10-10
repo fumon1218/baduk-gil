@@ -163,3 +163,13 @@ body.chess-page{background:#1c140d url(../assets/bg-wood.webp) center/cover fixe
 .oks-overlay.look-ov{background:transparent;align-items:flex-end;pointer-events:none;padding:0}
 .look-ov .go-look{pointer-events:auto;max-height:42vh;overflow:auto;width:min(860px,100%);border-radius:14px 14px 0 0;padding:14px 18px;box-shadow:0 -6px 24px rgba(0,0,0,.4)}
 .look-ov .go-look h2{margin:0 0 4px;font-size:20px}.look-ov .sw-row{margin:4px 0 8px}.look-ov .sw{width:78px;padding:4px}.look-ov .sw i{height:40px}.look-ov .go-look .go-src{margin:6px 0}
+
+.go-dash{background:#fffaf0;border:1px solid #e6dcc4;border-radius:14px;padding:12px 14px;margin:8px 0 12px}
+.dash-row{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap}
+.dash-row>div{display:flex;flex-direction:column;min-width:64px}
+.dash-row b{font-size:1.5rem;color:#2b3a55;line-height:1.1}
+.dash-row small,.dash-pc{color:#7a6f58;font-size:.78rem}
+.dash-bars{margin-left:auto;flex-direction:row!important;align-items:flex-end;gap:4px;height:38px;min-width:80px!important}
+.dash-bars i{width:9px;background:#e3dac3;border-radius:3px}.dash-bars i.on{background:#3d7a5a}
+.dash-prog{height:8px;background:#eadfc6;border-radius:6px;margin:10px 0 4px;overflow:hidden}.dash-prog span{display:block;height:100%;background:linear-gradient(90deg,#3d7a5a,#6bb08a)}
+.dash-weak{font-size:.85rem;color:#8a4b2a;align-self:center}

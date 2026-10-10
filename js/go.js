@@ -490,6 +490,12 @@ const PSUF = (() => { try { const a = O.profile && O.profile.active(); return a 
 const PROG_KEY = 'oks_go_prog_v1' + PSUF;
 const progress = (() => { try { return JSON.parse(localStorage.getItem(PROG_KEY) || '{}'); } catch (e) { return {}; } })();
 const saveProg = () => { try { localStorage.setItem(PROG_KEY, JSON.stringify(progress)); } catch (e) {} };
+/* ---------- 학습 기록(일일 대시보드용): 날짜별 푼 문제·정답·완료한 강 ---------- */
+const ACT_KEY = 'baduk_act_v1' + PSUF, dayKey = (t) => { const d = new Date(t || Date.now()); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+const loadAct = () => { try { return JSON.parse(localStorage.getItem(ACT_KEY) || '{}'); } catch (e) { return {}; } };
+function actAdd(f) { try { const a = loadAct(), k = dayKey(), e = a[k] || { items: 0, clean: 0, lessons: 0 }; Object.keys(f).forEach((x) => { e[x] = (e[x] || 0) + f[x]; }); a[k] = e; const ks = Object.keys(a).sort(); while (ks.length > 120) delete a[ks.shift()]; localStorage.setItem(ACT_KEY, JSON.stringify(a)); } catch (e) {} }
+function streakOf(a) { let n = 0, t = Date.now(); if (!a[dayKey(t)]) t -= DAY0; while (a[dayKey(t)] && (a[dayKey(t)].items || a[dayKey(t)].lessons)) { n++; t -= DAY0; } return n; }
+const DAY0 = 864e5;
 /* ---------- 오답노트: 틀린 문제를 모아 두었다가 1일 → 3일 → 7일 뒤에 다시 풀어요(3번 연속 깨끗이 풀면 졸업) ---------- */
 const WR_KEY = 'oks_go_wrong_v1' + PSUF, DAY = 864e5, WR_GAP = [0, DAY, 3 * DAY, 7 * DAY];
 const loadWrong = () => { try { return JSON.parse(localStorage.getItem(WR_KEY) || '{}'); } catch (e) { return {}; } };
@@ -504,6 +510,20 @@ function startWrong() {
 }
 /* ---------- 쉬운 낱말 풀이 ---------- */
 const WORDS = [['활로', '돌 바로 옆(위·아래·왼쪽·오른쪽)의 빈 점이에요. 돌이 숨 쉬는 구멍이에요.'], ['단수', '활로가 딱 1개만 남은 위험한 상태예요. 하나만 더 막히면 잡혀요.'], ['따내기', '활로가 0이 된 돌을 판에서 들어내는 거예요.'], ['집', '내 돌로 둘러싼 빈 곳이에요. 집이 많은 쪽이 이겨요.'], ['덤', '흑이 먼저 두는 대신 백에게 주는 점수예요(6.5집).'], ['귀 · 변 · 중앙', '판의 모서리 · 가장자리 · 가운데예요. 초반에는 귀 → 변 → 중앙 순서로 둬요.'], ['화점 · 소목 · 삼삼', '귀에서 많이 두는 자리예요(4-4 · 3-4 · 3-3). 줄 번호는 가장자리가 1줄이에요.'], ['걸침', '상대가 차지한 귀의 돌에 가까이 두어 방해하는 수예요.'], ['벌림', '내 돌에서 변을 따라 멀리 두어 집 모양을 넓히는 수예요.'], ['굳힘', '내 귀의 돌 옆에 한 수 더 두어 귀를 단단하게 하는 수예요.'], ['날일자 · 눈목자 · 한 칸 뜀', '날일자는 내 돌과 대각선으로 놓는 모양, 눈목자는 말처럼 한 칸 건너 대각선으로 뛰는 모양, 한 칸 뜀은 곧게 한 칸 떨어져 두는 모양이에요.'], ['선수 · 후수', '선수는 상대가 꼭 받아야 하는 수, 후수는 안 받아도 되는 수예요. 선수를 먼저 쓰고 큰 곳으로 가요.'], ['끝내기', '집의 경계를 마지막으로 정리하는 단계예요. 큰 곳부터 둬요.'], ['세력(두터움)', '집은 아니지만 돌이 힘차게 서 있는 벽이에요. 나중에 공격에 쓸 수 있어요.'], ['접바둑', '실력 차이를 줄이려고 약한 쪽이 흑으로 돌을 미리 놓고 시작하는 거예요.']];
+function openSync() {
+  document.querySelectorAll('.oks-overlay').forEach((x) => x.remove()); const ov = document.createElement('div'); ov.className = 'oks-overlay'; ov.style.zIndex = 90;
+  const mine = () => { const o = {}; try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (/^(baduk_|oks_go_)/.test(k)) o[k] = localStorage.getItem(k); } } catch (e) {} return o; };
+  const pack = () => 'BADUK1:' + btoa(unescape(encodeURIComponent(JSON.stringify(mine()))));
+  const unpack = (t) => { t = (t || '').trim(); if (t.indexOf('BADUK1:') !== 0) throw 0; const o = JSON.parse(decodeURIComponent(escape(atob(t.slice(7))))); if (!o || typeof o !== 'object') throw 0; return o; };
+  ov.innerHTML = '<div class="ch-card go-sync"><h2>진도 옮기기</h2><p class="go-src">이 기기의 진도·오답노트·급수·학습 기록·판 설정을 다른 기기로 옮깁니다. 서버를 쓰지 않으므로 직접 옮겨야 합니다.</p><h4>1. 이 기기에서 내보내기</h4><div class="ch-row"><button type="button" class="ch-chip" id="syCopy">📋 코드 복사</button><button type="button" class="ch-chip" id="syFile">💾 파일로 저장</button></div><h4>2. 다른 기기에서 가져오기</h4><textarea id="syText" rows="3" placeholder="복사한 코드를 여기에 붙여 넣으세요" style="width:100%;border-radius:10px;border:1px solid #d9cfb6;padding:8px;font-size:.8rem"></textarea><div class="ch-row"><button type="button" class="ch-chip" id="syGo">⬇ 코드로 가져오기</button><label class="ch-chip" style="cursor:pointer">📂 파일 고르기<input id="syPick" type="file" accept=".json,.txt" hidden></label></div><p class="go-src" id="syMsg">가져오면 이 기기의 기존 기록이 덮어써집니다.</p><div class="ch-row"><button type="button" class="ch-chip" id="syClose">닫기</button></div></div>';
+  document.body.appendChild(ov); const msg = (t) => { $('syMsg').textContent = t; };
+  const apply = (t) => { try { const o = unpack(t), ks = Object.keys(o).filter((k) => /^(baduk_|oks_go_)/.test(k)); if (!ks.length) throw 0; if (!confirm('이 기기의 기록을 가져온 기록으로 바꿉니다. 계속할까요?')) return; ks.forEach((k) => localStorage.setItem(k, o[k])); msg('가져왔습니다. 화면을 새로 고칩니다…'); setTimeout(() => location.reload(), 900); } catch (e) { msg('코드를 읽지 못했습니다. 처음부터 끝까지 그대로 붙여 넣었는지 확인해 주세요.'); } };
+  $('syCopy').onclick = async () => { const t = pack(); try { await navigator.clipboard.writeText(t); msg('복사했습니다. 다른 기기에서 붙여 넣으세요.'); } catch (e) { $('syText').value = t; $('syText').select(); msg('아래 칸의 코드를 직접 복사해 주세요.'); } };
+  $('syFile').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([pack()], { type: 'text/plain' })); a.download = 'baduk-gil-progress-' + dayKey() + '.txt'; a.click(); msg('파일을 저장했습니다.'); };
+  $('syGo').onclick = () => apply($('syText').value);
+  $('syPick').onchange = (e) => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => apply(String(r.result)); r.readAsText(f); };
+  $('syClose').onclick = () => { ov.remove(); openCurriculum(); };
+}
 function showWords() {
   document.querySelectorAll('.oks-overlay').forEach((x) => x.remove()); const ov = document.createElement('div'); ov.className = 'oks-overlay'; ov.style.zIndex = 90;
   ov.innerHTML = '<div class="ch-card go-words"><h2>바둑 용어 사전</h2><dl>' + WORDS.map((w) => '<dt>' + w[0] + '</dt><dd>' + w[1] + '</dd>').join('') + '</dl><div class="ch-row"><button type="button" class="ch-chip" id="wordsRead">🔊 읽어 주기</button><button type="button" class="ch-chip" id="wordsClose">닫기</button></div></div>';
@@ -542,6 +562,17 @@ function examResult() {
   return { pass, right, n, msg };
 }
 function chapLabel() { if (!lesson || lesson.srcs) return ''; const c = C.chapterOf(lesson.id); return c ? '제' + c.no + '장 · ' : ''; }
+function dashHTML(nextId) {
+  const a = loadAct(), t = a[dayKey()] || { items: 0, clean: 0, lessons: 0 }, st = streakOf(a), all = L.LESSONS.filter((l) => C.chapterOf(l.id)), done = all.filter((l) => progress[l.id]).length, pc = all.length ? Math.round(done * 100 / all.length) : 0;
+  const w = loadWrong(), cnt = {}; Object.keys(w).forEach((k) => { const ch = C.chapterOf(k.split(':')[0]); if (ch) cnt[ch.id] = (cnt[ch.id] || 0) + 1; });
+  const wk = Object.keys(cnt).sort((x, y) => cnt[y] - cnt[x])[0], wkCh = wk && C.CHAPTERS.find((c) => c.id === wk), due = wrongPool(true).length, nl = nextId && L.LESSONS.find((l) => l.id === nextId);
+  let bars = ''; for (let i = 6; i >= 0; i--) { const k = dayKey(Date.now() - i * DAY0), e = a[k] || {}, v = (e.items || 0) + (e.lessons || 0) * 3; bars += '<i title="' + k + '" style="height:' + Math.max(4, Math.min(34, 4 + v * 2)) + 'px" class="' + (v ? 'on' : '') + '"></i>'; }
+  const todo = [];
+  if (due) todo.push('<button type="button" class="ch-chip" id="dashWrong">📕 복습할 오답 ' + due + '개 풀기</button>');
+  if (nl) todo.push('<button type="button" class="ch-chip" id="dashNext" data-id="' + nl.id + '">▶ 이어서 배우기 · ' + nl.title + '</button>');
+  if (wkCh) todo.push('<span class="dash-weak">자주 틀리는 단원: 제' + wkCh.no + '장 ' + wkCh.title + ' (오답 ' + cnt[wk] + ')</span>');
+  return '<div class="go-dash"><div class="dash-row"><div><b>' + st + '</b><small>연속 학습일</small></div><div><b>' + t.items + '</b><small>오늘 푼 문제</small></div><div><b>' + (t.items ? Math.round(t.clean * 100 / t.items) + '%' : '-') + '</b><small>오늘 한 번에 맞힘</small></div><div class="dash-bars" aria-label="최근 7일">' + bars + '</div></div><div class="dash-prog"><span style="width:' + pc + '%"></span></div><small class="dash-pc">전체 진도 ' + done + '/' + all.length + '강 (' + pc + '%)</small><div class="ch-row">' + todo.join('') + '</div></div>';
+}
 function openCurriculum() {
   const el = $('menu'); el.hidden = false; document.querySelectorAll('.oks-overlay').forEach((x) => x.remove());
   let nextId = null, nextCh = null; C.CHAPTERS.some((c) => C.lessonsOf(c.id).some((l) => { if (!progress[l.id]) { nextId = l.id; nextCh = c.id; return true; } return false; }));
@@ -552,11 +583,12 @@ function openCurriculum() {
     return '<details class="go-ch"' + (open ? ' open' : '') + '><summary><img class="go-chimg" src="assets/' + c.id + '.webp" alt="" loading="lazy"><span><b>제' + c.no + '장 ' + c.title + '</b> <small>' + c.sub + ' · ' + done + '/' + ls.length + '강</small></span></summary><p class="go-goal">학습 목표: ' + c.goal + '</p>' + secs + (c.exam === false ? '' : '<button type="button" class="ch-btn go-exam" data-exam="' + c.id + '">📝 승급 시험 · 합격 시 ' + C.rankName(c.rank) + (ex ? ' (최고 ' + ex.best + '/' + ex.of + ')' : '') + '</button>') + '</details>';
   }).join('');
   const wn = Object.keys(loadWrong()).length, wd = wrongPool(true).length;
-  el.innerHTML = '<div class="ch-card go-map"><h2>바둑길 · 교재 목차</h2><div class="go-rank">현재 급수 <b>' + C.rankName(rk.rank) + '</b>' + (nxtRank ? ' · 다음 목표 <b>' + C.rankName(nxtRank) + '</b>' : ' · 최고 단계에 도달했습니다') + '<small>급수는 이 앱의 학습 기준이며 공식 급수와 다릅니다.</small></div>' +
-    '<button type="button" class="ch-btn big" id="diagBtn">🧭 실력 진단 · 어느 장부터 시작할까요?</button>' + (wn ? '<button type="button" class="ch-btn big go" id="wrongBtn">📕 오답노트 · 틀린 문제 ' + wn + '개' + (wd ? ' (복습할 때: ' + wd + '개)' : '') + '</button>' : '') + chs + '<div class="ch-row"><button type="button" class="ch-chip" id="wordsBtn2">📖 용어 사전</button><button type="button" class="ch-chip" id="lookBtn2">🎨 판·배경</button><button type="button" class="ch-chip" id="mapBack">← 처음 화면</button></div><p class="go-src">공개 기보: CWI 바둑 기보 데이터베이스(Jan van der Steen 외). 정석·용어 해설은 앱 제작자가 정리한 것으로, 전문가 검수를 거쳐 계속 보완합니다.</p></div>';
+  el.innerHTML = '<div class="ch-card go-map"><h2>바둑길 · 교재 목차</h2>' + dashHTML(nextId) + '<div class="go-rank">현재 급수 <b>' + C.rankName(rk.rank) + '</b>' + (nxtRank ? ' · 다음 목표 <b>' + C.rankName(nxtRank) + '</b>' : ' · 최고 단계에 도달했습니다') + '<small>급수는 이 앱의 학습 기준이며 공식 급수와 다릅니다.</small></div>' +
+    '<button type="button" class="ch-btn big" id="diagBtn">🧭 실력 진단 · 어느 장부터 시작할까요?</button>' + (wn ? '<button type="button" class="ch-btn big go" id="wrongBtn">📕 오답노트 · 틀린 문제 ' + wn + '개' + (wd ? ' (복습할 때: ' + wd + '개)' : '') + '</button>' : '') + chs + '<div class="ch-row"><button type="button" class="ch-chip" id="wordsBtn2">📖 용어 사전</button><button type="button" class="ch-chip" id="lookBtn2">🎨 판·배경</button><button type="button" class="ch-chip" id="syncBtn2">🔁 진도 옮기기</button><button type="button" class="ch-chip" id="mapBack">← 처음 화면</button></div><p class="go-src">공개 기보: CWI 바둑 기보 데이터베이스(Jan van der Steen 외). 정석·용어 해설은 앱 제작자가 정리한 것으로, 전문가 검수를 거쳐 계속 보완합니다.</p></div>';
   el.querySelectorAll('[data-id]').forEach((b) => { b.onclick = () => { O.unlock(); startLesson(b.dataset.id); }; });
   el.querySelectorAll('[data-exam]').forEach((b) => { b.onclick = () => { O.unlock(); startExam(b.dataset.exam); }; });
-  $('diagBtn').onclick = () => { O.unlock(); startDiag(); }; $('wordsBtn2').onclick = showWords; $('lookBtn2').onclick = openLook;
+  $('diagBtn').onclick = () => { O.unlock(); startDiag(); }; $('wordsBtn2').onclick = showWords; $('lookBtn2').onclick = openLook; $('syncBtn2').onclick = openSync;
+  if ($('dashWrong')) $('dashWrong').onclick = () => { O.unlock(); startWrong(); }; if ($('dashNext')) $('dashNext').onclick = () => { O.unlock(); startLesson($('dashNext').dataset.id); };
   if ($('wrongBtn')) $('wrongBtn').onclick = () => { O.unlock(); startWrong(); };
   $('mapBack').onclick = () => openMenu(false); const nx = el.querySelector('.next'); if (nx && nx.scrollIntoView) setTimeout(() => nx.scrollIntoView({ block: 'center' }), 50);
 }
@@ -677,7 +709,7 @@ async function lessonAnswer(v) {
   else { if (r.show) applyShow(r.show); O.sfx('ok'); say(r.msg, 'good', r.msg); itemDone(r); }
 }
 async function itemDone(r) {
-  P.finished = true; if (P.mist) lessonStep.bad[lessonStep.item] = 1; if (!P.mist) wrongClean(); const rid = runId, it = lessonStep.item; stepPhase = 'wait'; updateButtons(); busy = true; if (P.mode === 'quiz') { $('quiz').querySelectorAll('button').forEach((b) => { b.disabled = true; }); }
+  P.finished = true; if (P.mist) lessonStep.bad[lessonStep.item] = 1; if (!P.mist) wrongClean(); if (!lesson.kibo) actAdd({ items: 1, clean: P.mist ? 0 : 1 }); const rid = runId, it = lessonStep.item; stepPhase = 'wait'; updateButtons(); busy = true; if (P.mode === 'quiz') { $('quiz').querySelectorAll('button').forEach((b) => { b.disabled = true; }); }
   if (r.after && r.after.length) await playSeq(r.after, P);
   await sleep(r.after && r.after.length ? 1800 : 2300); busy = false; if (rid !== runId) return; lessonStep.item++; if (lessonStep.item >= lesson.items.length) return lessonDone(); showItem();
 }
@@ -689,7 +721,7 @@ function lessonDone() {
     const bx = [{ label: '☰ 교재 목차', color: 'blue', onClick: () => openCurriculum() }]; if (!r.pass) bx.unshift({ label: '🔁 다시 도전', color: 'green', onClick: () => startExam(lesson.exam.id) });
     setTimeout(() => { if (rid0 === runId) O.finish({ stats, entry: { at: new Date().toISOString(), lesson: LEARN_LESSON, subject: 'play', subjectName: '바둑', school: 'elem', topic: '바둑길 · 승급 시험 제' + lesson.exam.no + '장', level: 1, engine: 'go-learn', rounds: r.n, mistakes: lessonStep.mistakes, glow: 0, hand: 0, asked: lessonStep.asked, sec: Math.round((Date.now() - stats.t0) / 1000) }, stars: r.pass ? 3 : 1, title: r.pass ? '합격' : '불합격', text: r.msg + ' (' + r.right + '/' + r.n + ' 정답)', speak: r.msg, mission: { lesson: 1 }, buttons: bx }); }, 400); return; }
   const rid = runId, m = lessonStep.mistakes, n = Math.max(1, lesson.items.length), stars = m <= Math.max(1, n * 0.15) ? 3 : m <= n * 0.6 ? 2 : 1; over = true; stepPhase = 'done'; updateButtons(); hideQuiz();
-  const prev = progress[lesson.id]; if (lesson.id !== 'wrong' && (!prev || prev.stars < stars)) progress[lesson.id] = { stars, at: Date.now() }; saveProg(); O.rememberLevel(LEARN_LESSON, lesson.lv);
+  const prev = progress[lesson.id]; if (lesson.id !== 'wrong' && (!prev || prev.stars < stars)) progress[lesson.id] = { stars, at: Date.now() }; if (!prev && !lesson.srcs && !lesson.kibo) actAdd({ lessons: 1 }); saveProg(); O.rememberLevel(LEARN_LESSON, lesson.lv);
   const entry = { at: new Date().toISOString(), lesson: LEARN_LESSON, subject: 'play', subjectName: '바둑', school: 'elem', topic: '3D 바둑 배우기 · ' + lesson.title, level: lesson.lv, engine: 'go-learn', rounds: n, mistakes: m, glow: 0, hand: 0, asked: lessonStep.asked, sec: Math.round((Date.now() - stats.t0) / 1000) };
   const flat = C.CHAPTERS.reduce((a, c) => a.concat(C.lessonsOf(c.id)), []), idx = flat.indexOf(lesson), nxt = lesson.srcs ? null : flat[idx + 1], me = lesson;
   const btns = []; if (nxt) btns.push({ label: '▶ 다음 수업: ' + nxt.title, color: 'green', onClick: () => startLesson(nxt.id) });
