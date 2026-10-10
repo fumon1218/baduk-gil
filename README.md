@@ -29,3 +29,6 @@ GitHub Pages: 저장소 Settings → Pages → Branch `main` / `(root)` 로 켜�
 
 
 `node scripts/export-review.mjs > review.csv` — 모든 강의 본문을 표로 뽑아 전문가 검수에 씁니다.
+
+## 궁도 사활 수업
+`scripts/sahwal-gen.mjs`(오래 걸림)가 3~6궁 눈 모양을 엔진 풀이기로 검증해 `scripts/sahwal-all.json`에 저장하고, `scripts/sahwal-build.mjs`가 거기서 수업 3개(sh-g1~g3, 문제 33개)를 골라 `js/lessons-sahwal.js`를 만듭니다. 정답은 모두 풀이기 결과와 일치합니다.
