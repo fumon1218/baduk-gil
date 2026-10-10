@@ -95,14 +95,15 @@ function modelIcon(k) {
 function openLook() {
   document.querySelectorAll('.oks-overlay').forEach((x) => x.remove()); const ov = document.createElement('div'); ov.className = 'oks-overlay'; ov.style.zIndex = 90;
   const draw = () => {
+    const keep = ov.firstChild ? ov.firstChild.scrollTop : 0;
     ov.innerHTML = '<div class="ch-card go-look"><h2>판과 배경 고르기</h2><h4>판 모양</h4><div class="sw-row">' + MODELS.map((k) => '<button type="button" class="sw' + (k.id === look.model ? ' on' : '') + '" data-m="' + k.id + '"><i class="sw-model">' + modelIcon(k) + '</i><span>' + k.name + '</span></button>').join('') + '</div><h4>바둑판 재질</h4><div class="sw-row">' + SKINS.map((k) => '<button type="button" class="sw' + (k.id === look.board ? ' on' : '') + '" data-b="' + k.id + '"><i class="sw-board" style="background-color:' + k.base + ';background-image:url(' + k.img + ');--ln:' + k.line + '"></i><span>' + k.name + '</span></button>').join('') + '</div><h4>돌통</h4><div class="sw-row">' + BOWLS.map((k) => '<button type="button" class="sw' + (k.id === look.bowl ? ' on' : '') + '" data-w="' + k.id + '"><i class="sw-scene" style="background:' + (k.img ? 'url(' + k.img + ') center/cover' : '#e8dfc8') + '"></i><span>' + k.name + '</span></button>').join('') + '</div><h4>배경</h4><div class="sw-row">' + SCENES.map((k) => '<button type="button" class="sw' + (k.id === look.scene ? ' on' : '') + '" data-s="' + k.id + '"><i class="sw-scene" style="background:' + k.sw + '"></i><span>' + k.name + '</span></button>').join('') + '</div><p class="go-src">바둑에 방해되지 않도록 배경은 차분하게 만들었습니다. 설정은 이 기기에 저장됩니다.</p><div class="ch-row"><button type="button" class="ch-chip" id="lookClose">닫기</button></div></div>';
     ov.querySelectorAll('[data-m]').forEach((b) => { b.onclick = () => { look.model = b.dataset.m; saveLook(); applyLook(); draw(); }; });
     ov.querySelectorAll('[data-w]').forEach((b) => { b.onclick = () => { look.bowl = b.dataset.w; saveLook(); applyLook(); draw(); }; });
     ov.querySelectorAll('[data-b]').forEach((b) => { b.onclick = () => { look.board = b.dataset.b; saveLook(); applyLook(); draw(); }; });
     ov.querySelectorAll('[data-s]').forEach((b) => { b.onclick = () => { look.scene = b.dataset.s; saveLook(); applyLook(); draw(); }; });
-    $('lookClose').onclick = () => { ov.remove(); $('menu').style.visibility = ''; };
+    $('lookClose').onclick = () => { ov.remove(); $('menu').style.visibility = ''; }; ov.firstChild.scrollTop = keep;
   };
-  document.body.appendChild(ov); $('menu').style.visibility = 'hidden'; draw(); ov.style.background = 'transparent'; ov.style.alignItems = 'flex-end'; ov.style.pointerEvents = 'none'; ov.firstChild.style.pointerEvents = 'auto'; ov.firstChild.style.maxHeight = '46vh'; ov.firstChild.style.overflow = 'auto';
+  document.body.appendChild(ov); ov.classList.add('look-ov'); $('menu').style.visibility = 'hidden'; draw();
 }
 
 const wx = (s) => ((s % N) - (N - 1) / 2) * SP, wz = (s) => (((s / N) | 0) - (N - 1) / 2) * SP;
@@ -805,3 +806,12 @@ window.__go = {
 };
 
 $('back').onclick = () => { O.unlock(); openCurriculum(); };
+
+/* ---------- 내용 오류 신고: 지금 보는 강·쪽·문제 정보를 담아 GitHub 이슈 작성 화면을 엽니다 ---------- */
+$('btnReport').onclick = () => {
+  let where = '(강의 밖 화면)', what = '';
+  if (lesson && !lesson.srcs) { const c = C.chapterOf(lesson.id); where = (c ? '제' + c.no + '장 ' + c.title + ' · ' : '') + lesson.title + ' (' + lesson.id + ')'; what = lessonStep.phase === 'item' || stepPhase === 'item' ? '문제 ' + (lessonStep.item + 1) : '설명 ' + (lessonStep.page + 1) + '쪽'; }
+  else if (lesson && lesson.srcs) { const k = srcOf(); where = lesson.title + ' · 원본 ' + k.lid + ' 문제 ' + (k.idx + 1); }
+  const body = '### 어느 부분인가요\n' + where + (what ? ' / ' + what : '') + '\n\n### 무엇이 잘못되었나요 (용어, 해설, 정답, 표현 등)\n\n\n### 올바른 내용이라고 생각하시는 것\n\n';
+  window.open('https://github.com/fumon1218/baduk-gil/issues/new?title=' + encodeURIComponent('[내용 신고] ' + where) + '&body=' + encodeURIComponent(body), '_blank', 'noopener');
+};
