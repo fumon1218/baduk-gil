@@ -70,7 +70,7 @@
         return badR(item.wrong || m, { seq: seq.slice(0, 7), reset: true, resetDelay: 2600, noAutoHint: true });
       };
     } else if (item.kind === 'set') {
-      var answers = Ts(item.answers), wrongAt = {}; (item.wrongAt || []).forEach(function (w) { wrongAt[T(w[0])] = w[1]; }); P.show = { rings: [] };
+      var answers = Ts(item.answers), wrongAt = {}; (item.wrongAt || []).forEach(function (w) { wrongAt[T(w[0])] = w[1]; }); P.show = { rings: Ts(item.mark) };
       P.hint = function () { return { s: answers[0], text: item.hintText || '노란 동그라미 자리를 봐요.' }; };
       P.tap = function (s) { var g2 = g.copy(); if (!g2.play(s % n, (s / n) | 0)) return badR(errText(g2)); if (answers.indexOf(s) >= 0) return okR(explain); return badR(wrongAt[s] || item.wrong || '다시 생각해 봐요.'); };
     } else if (item.kind === 'pick' || item.kind === 'legalpick') {

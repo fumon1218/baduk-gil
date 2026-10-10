@@ -370,16 +370,44 @@ function finishScoring() {
   const title = mode === 'two' ? colName(w) + ' ' + margin.toFixed(1).replace('.0', '') + '집 승!' : humanWon ? '이겼어요! ' + margin.toFixed(1).replace('.0', '') + '집 차이' : '아쉬워요. ' + margin.toFixed(1).replace('.0', '') + '집 차이로 졌어요';
   const text = '⚫ 흑 ' + sc.black + '집 (집 ' + sc.terrB + ' + 따낸 돌 ' + (sc.capsB + sc.deadW) + ') · ⚪ 백 ' + sc.white + '집 (집 ' + sc.terrW + ' + 따낸 돌 ' + (sc.capsW + sc.deadB) + ' + 덤 ' + sc.komi + ')';
   const stars = humanWon ? 3 : margin <= 10 ? 2 : 1, speak = humanWon ? '이겼어요! 정말 잘했어요!' : '아쉽지만 끝까지 잘했어요. 한 번 더 해 볼까요?';
+  if (mode === 'play') lastPlayed = { hist: game.stack.map((r) => (r.pass ? -1 : r.s)), n: N, hc: game.handicap, color: cfg.color, level: cfg.level, komi: cfg.komi };
   say(title, humanWon ? 'good' : null, false);
   const repP = mode === 'play' ? safeReport(game.stack, game.handicap, cfg.color) : null;
   const entry = { at: new Date().toISOString(), lesson: LESSON, subject: 'play', subjectName: '바둑', school: 'elem', topic: '3D 바둑 ' + N + '줄' + (repP && repP.phases.length ? ' · 전략 ' + repP.phases.map((p) => p.name + ' ' + p.score).join('/') : ''), level: mode === 'play' ? cfg.level : 1, engine: 'go',
     rounds: game.stack.length, mistakes: stats.mistakes, glow: 0, hand: 0, asked: stats.asked, sec: Math.round((Date.now() - stats.t0) / 1000) };
   const btns = [{ label: '🔁 한 번 더', color: 'green', onClick: () => startGame(cfg) }];
   btns.push({ label: '🔍 복기하기', color: 'orange', onClick: () => startReview() });
+  if (mode === 'play' && game.stack.length >= 14) btns.push({ label: '🧩 내 큰 실수 풀어보기', color: 'orange', onClick: () => startMistakes() });
   if (repP && repP.phases.length) btns.push({ label: '📊 전략 리포트', color: 'green', onClick: () => showReport(repP) });
   if (mode === 'play' && humanWon && cfg.level < 5) btns.push({ label: '⬆ 다음 수준 (' + (cfg.level + 1) + ')', color: 'orange', onClick: () => { O.rememberLevel(LESSON, cfg.level + 1); startGame(Object.assign({}, cfg, { level: cfg.level + 1 })); } });
   btns.push({ label: '☰ 메뉴', color: 'blue', onClick: () => openMenu(true) });
   setTimeout(() => { if (rid === runId) O.finish({ stats, entry, stars, title, text, speak, mission: { lesson: 1 }, buttons: btns }); }, 1600);
+}
+
+/* ---------- 내 대국 복기: 승률이 크게 떨어진 내 수 3곳을 문제로 만들어 다시 풀어 봐요 ---------- */
+let lastPlayed = null;
+async function startMistakes() {
+  const lp = lastPlayed; if (!lp) return; document.querySelectorAll('.oks-overlay').forEach((x) => x.remove()); startWorker();
+  const { hist, n, hc, color } = lp, base = { n, handicap: hc, level: lp.level, komi: lp.komi };
+  say('내 대국을 분석하고 있습니다. 잠시만 기다려 주세요…', null, false);
+  const win = []; // win[k]: k수 둔 뒤 내가 이길 확률
+  for (let k = 0; k <= hist.length; k++) { const r = await ask('est', Object.assign({ hist: hist.slice(0, k), runs: 70 }, base)); const b = r && r.black != null ? r.black : 0.5; win.push(color > 0 ? b : 1 - b); if (k % 8 === 0) say('분석 중… ' + Math.round(k / hist.length * 100) + '%', null, false); }
+  const cand = []; hist.forEach((s, i) => { const mine = color > 0 ? i % 2 === (hc ? 1 : 0) : i % 2 === (hc ? 0 : 1); if (!mine || s < 0 || i < 6) return; cand.push({ i, s, drop: win[i] - win[i + 1] }); });
+  const pick = cand.filter((c) => c.drop >= 0.08).sort((a, b) => b.drop - a.drop).slice(0, 3).sort((a, b) => a.i - b.i);
+  if (!pick.length) { say('큰 실수가 없었습니다. 침착하게 잘 두셨습니다!', 'good', false); openMenu(true); return; }
+  const items = [];
+  for (const c of pick) {
+    const h = await ask('hint', Object.assign({ hist: hist.slice(0, c.i) }, base)); if (!h || h.s < 0 || h.s === c.s) continue;
+    const g = newPlainGame(n, hc); hist.slice(0, c.i).forEach((s) => { if (s < 0) g.pass(); else g.play(s % n, (s / n) | 0); });
+    const rows = []; for (let y = 0; y < n; y++) { let r = ''; for (let x = 0; x < n; x++) { const v = g.get(y * n + x); r += v > 0 ? 'X' : v < 0 ? 'O' : '.'; } rows.push(r); }
+    const good = (h.kids || []).filter((k) => k.s >= 0 && k.s !== c.s && k.win >= h.win - 0.03).slice(0, 3).map((k) => [k.s % n, (k.s / n) | 0]); if (!good.length) good.push([h.s % n, (h.s / n) | 0]);
+    const a0 = Math.round(win[c.i] * 100), a1 = Math.round(win[c.i + 1] * 100), pos = (s) => (s % n + 1) + '·' + (((s / n) | 0) + 1);
+    items.push({ kind: 'set', rows, turn: color > 0 ? 'X' : 'O', answers: good, mark: [[c.s % n, (c.s / n) | 0]], sym: false,
+      prompt: (c.i + 1) + '수째 상황입니다. 내가 실제로 둔 곳(' + pos(c.s) + ')은 이길 확률이 약 ' + a0 + '%에서 ' + a1 + '%로 떨어졌습니다. 더 좋은 수는 어디일까요? (노란 원은 내가 둔 곳)',
+      explain: '컴퓨터가 고른 수입니다. 이 수를 두면 이길 확률이 약 ' + Math.round(h.win * 100) + '% 수준으로 유지됩니다.', wrong: '그 수도 나쁘지는 않지만 더 좋은 수가 있습니다. 힌트를 눌러 보세요.', hintText: '컴퓨터가 추천하는 자리를 보여 드립니다.' });
+  }
+  if (!items.length) { say('문제로 만들 만한 큰 실수가 없었습니다.', 'good', false); openMenu(true); return; }
+  startLesson('mistakes', { id: 'mistakes', lv: 1, title: '내 대국 복기', noWrong: true, pages: [], items, srcs: items.map((_, i) => ({ lid: 'mistakes', idx: i })), done: '내 대국의 큰 실수 ' + items.length + '곳을 다시 풀어 보았습니다. 승률은 컴퓨터의 추정치이므로 참고로만 보십시오.' });
 }
 
 /* ---------- 복기 ---------- */
@@ -431,8 +459,8 @@ const WR_KEY = 'oks_go_wrong_v1' + PSUF, DAY = 864e5, WR_GAP = [0, DAY, 3 * DAY,
 const loadWrong = () => { try { return JSON.parse(localStorage.getItem(WR_KEY) || '{}'); } catch (e) { return {}; } };
 const saveWrong = (w) => { try { localStorage.setItem(WR_KEY, JSON.stringify(w)); } catch (e) {} };
 const srcOf = () => (lesson.srcs ? lesson.srcs[lessonStep.item] : { lid: lesson.id, idx: lessonStep.item });
-function wrongMark() { if (!lesson || lesson.kibo) return; const k = srcOf(), key = k.lid + ':' + k.idx, w = loadWrong(), e = w[key] || { n: 0, box: 0 }; e.n++; e.box = 0; e.due = Date.now(); w[key] = e; saveWrong(w); }
-function wrongClean() { const k = srcOf(), key = k.lid + ':' + k.idx, w = loadWrong(), e = w[key]; if (!e) return; e.box++; if (e.box >= 3) delete w[key]; else e.due = Date.now() + WR_GAP[e.box]; saveWrong(w); }
+function wrongMark() { if (!lesson || lesson.kibo || lesson.noWrong) return; const k = srcOf(), key = k.lid + ':' + k.idx, w = loadWrong(), e = w[key] || { n: 0, box: 0 }; e.n++; e.box = 0; e.due = Date.now(); w[key] = e; saveWrong(w); }
+function wrongClean() { if (lesson && lesson.noWrong) return; const k = srcOf(), key = k.lid + ':' + k.idx, w = loadWrong(), e = w[key]; if (!e) return; e.box++; if (e.box >= 3) delete w[key]; else e.due = Date.now() + WR_GAP[e.box]; saveWrong(w); }
 function wrongPool(onlyDue) { const w = loadWrong(), out = []; Object.keys(w).forEach((key) => { if (onlyDue && w[key].due > Date.now()) return; const [lid, idx] = key.split(':'), l = L.LESSONS.find((q) => q.id === lid); if (l && l.items[+idx]) out.push({ lid, idx: +idx, it: l.items[+idx], n: w[key].n }); }); return out.sort((a, b) => b.n - a.n); }
 function startWrong() {
   let pool = wrongPool(true); if (!pool.length) pool = wrongPool(false); pool = pool.slice(0, 10); if (!pool.length) { openCurriculum(); return; }
@@ -804,7 +832,7 @@ S.onFrame((dt, t) => { const k = 1 + Math.sin(t * 5) * 0.1; markPool.forEach((m)
 /* 시험용 손잡이 */
 window.__go = {
   game: () => game, mode: () => mode, over: () => over, busy: () => busy, scoring: () => scoring, prep: () => P, lesson: () => lesson, step: () => lessonStep, stoneCount: () => stones.size, n: () => N, dead: () => [...deadSet],
-  tap: (s) => (mode === 'learn' ? lessonTap(s) : mode === 'guess' ? guessTap(s) : humanTap(s)), guessState: () => G, wrong: () => loadWrong(), answer: lessonAnswer, start: startGame, startLesson, openMenu, openCurriculum, nextPage, marks, finishScoring, progress,
+  tap: (s) => (mode === 'learn' ? lessonTap(s) : mode === 'guess' ? guessTap(s) : humanTap(s)), guessState: () => G, wrong: () => loadWrong(), answer: lessonAnswer, start: startGame, startLesson, openMenu, mistakes: startMistakes, setLast: (x) => { lastPlayed = x; }, openCurriculum, nextPage, marks, finishScoring, progress,
   startDiag, startReview, showReport, safeReport, startKibo, startGuessPhase, allGames, showWords, lessonHint,
   screen(s) { return S.screenOf(new THREE.Vector3(wx(s), REST, wz(s))); }
 };
