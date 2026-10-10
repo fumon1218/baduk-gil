@@ -1,5 +1,5 @@
 /* 바둑길 서비스 워커 — 처음 한 번 받아 두면 인터넷 없이도 열려요. 파일을 바꾸면 CACHE 이름을 올려 주세요. */
-var CACHE = 'baduk-v10';
+var CACHE = 'baduk-v11';
 var FILES = [
 "./",
 "./assets/pieces.mp3",
@@ -63,6 +63,7 @@ var FILES = [
 "./js/lessons-l1.js",
 "./js/lessons-lecture.js",
 "./js/curriculum.js",
+"./js/tone.js",
 "./js/lessons-l2.js",
 "./js/lessons-l3.js",
 "./js/lessons-l4.js",

@@ -12,7 +12,11 @@ const colName = (c) => (c > 0 ? '흑' : '백');
 const josa = (w, a, b) => { const c = w.charCodeAt(w.length - 1) - 0xac00; return c >= 0 && c <= 11171 && c % 28 !== 0 ? a : b; };
 
 const S = createStage({ extent: 17, bg: 0x4b3b27, tableColor: 0x33402f, tableY: -2.2, pol: 0.62, minDist: 25, targetY: 0, sunPos: [10, 22, 12] });
-const { $, scene, say, note, sleep, tween, ease, poke } = S;
+const { $, scene, note, sleep, tween, ease, poke } = S;
+/* 화면에 나가는 모든 안내 글을 "~합니다"체로 맞춰요(원문은 그대로 두고 보여 줄 때만 바꿉니다) */
+const TN = (t) => (window.OKS_TONE ? window.OKS_TONE.tone(t) : t);
+{ const d = Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML'); Object.defineProperty(Element.prototype, 'innerHTML', { get: d.get, set(v) { d.set.call(this, typeof v === 'string' ? TN(v) : v); }, configurable: true }); }
+const say = (t, k, sp) => S.say(TN(t), k, typeof sp === 'string' ? TN(sp) : sp);
 
 /* ---------- 판 (크기가 바뀌면 다시 그려요) ---------- */
 let N = 9, SP = 2, HW = 8, EDGE = 2.4, HALF = 10.4, STONE_D = 1.9, REST = 0.3;

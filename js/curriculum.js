@@ -4,6 +4,7 @@
 (function (root) {
   'use strict';
   var L = root.OKS_GO_LESSONS || require('./lessons.js');
+  if (root.OKS_TONE || (typeof require !== 'undefined' && (root.OKS_TONE = require('./tone.js')))) L.LESSONS.forEach(function (l) { root.OKS_TONE.deep(l); }); /* 문체를 "~합니다"체로 */
   var CHAPTERS = [
     { id: 'ch1', no: 1, title: '바둑의 규칙', sub: '돌·활로·단수·집', rank: 25, goal: '바둑판과 돌, 활로와 단수, 착수금지와 패, 집 세기, 두 눈으로 사는 모양까지 바둑의 기본 규칙을 익힙니다.',
       sections: [{ t: '판과 돌, 활로', ids: ['i1', 'i2'] }, { t: '단수와 따내기', ids: ['i3', 'i4', 'i5'] }, { t: '집과 계가', ids: ['i6', 'i7', 'i8'] }, { t: '첫 대국', ids: ['i9'] }] },
