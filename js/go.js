@@ -100,9 +100,9 @@ function applyLook() {
   if (sc.img) { const sref = sc, im = getImg(sc.img, () => { if (look.scene === sref.id) applyLook(); }); if (im) { bgTex.dispose(); bgTex = new THREE.Texture(im); bgTex.colorSpace = THREE.SRGBColorSpace; bgTex.needsUpdate = true; bgTex.wrapS = bgTex.wrapT = THREE.ClampToEdgeWrapping; bgTex.userData.ar = im.width / im.height; scene.background = bgTex; fitBg(); } } scene.fog.color.setHex(sc.fog); if (floorMesh) floorMesh.material.color.setHex(sc.floor);
   SKIN = SKINS.find((k) => k.id === look.board) || SKINS[0]; MODEL = MODELS.find((k) => k.id === look.model) || MODELS[0];
   applyLight(sc);
-  if (sideMat.map) sideMat.map.dispose(); { const c = woodCanvas(256, 96, SKIN.side, 21), g = c.getContext('2d'), mim = MODEL.side && getImg(MODEL.side, () => { applyLook(); });
-    if (mim) g.drawImage(mim, 0, 0, 256, 96); else { const simg = SKIN.img && getImg(SKIN.img, () => { applyLook(); }); if (simg) { g.drawImage(simg, 0, 0, 256, 96); g.fillStyle = 'rgba(0,0,0,.28)'; g.fillRect(0, 0, 256, 96); } }
-    sideMat.map = canvasTexture(c); sideMat.needsUpdate = true; }
+  if (sideMat.map) sideMat.map.dispose(); { const c = woodCanvas(1024, 256, SKIN.side, 21), g = c.getContext('2d'), mim = MODEL.side && getImg(MODEL.side, () => { applyLook(); });
+    if (mim) g.drawImage(mim, 0, 0, 1024, 256); else { const simg = SKIN.img && getImg(SKIN.img, () => { applyLook(); }); if (simg) { g.drawImage(simg, 0, 0, 1024, 256); g.fillStyle = 'rgba(0,0,0,.28)'; g.fillRect(0, 0, 1024, 256); } }
+    sideMat.map = canvasTexture(c); sideMat.map.wrapS = THREE.RepeatWrapping; sideMat.map.repeat.x = (mim && MODEL.id !== 'jokban') ? Math.max(1, Math.round((2 * HALF / MODEL.T) / 4 * 2) / 2) : 1; sideMat.needsUpdate = true; }
   if (boardMesh) buildBoard(N); poke(500);
 }
 function saveLook() { try { localStorage.setItem(LOOK_KEY, JSON.stringify(look)); } catch (e) {} }
