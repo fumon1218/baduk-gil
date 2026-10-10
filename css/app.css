@@ -150,3 +150,10 @@ body.chess-page{background:#1c140d url(../assets/bg-wood.webp) center/cover fixe
 .go-map::before{height:110px!important}
 @media (max-width:520px){#menu .ch-card::before{margin:-24px -18px 12px;height:110px}.go-chimg{width:52px;height:52px}}
 #menu{align-items:flex-start}#menu>.ch-card{margin:auto}
+.oks-overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(15,10,5,.6);padding:16px;box-sizing:border-box;overflow:auto}
+.oks-overlay .ch-card{max-width:760px;width:100%}
+.sw-row{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:6px 0 14px}
+.sw{appearance:none;border:2px solid #d9ccae;background:#fff;border-radius:10px;padding:6px;font:inherit;color:#2a2018;cursor:pointer;width:92px}.sw.on{border-color:#7a5c2e;box-shadow:0 0 0 2px #d9bf86}
+.sw i{display:block;height:54px;border-radius:6px;border:1px solid rgba(0,0,0,.2)}.sw-board{background-image:repeating-linear-gradient(90deg,transparent 0 10px,var(--ln) 10px 11px),repeating-linear-gradient(0deg,transparent 0 10px,var(--ln) 10px 11px)!important;}
+.sw span{display:block;font-size:13px;margin-top:4px}
+.go-look h4{margin:10px 0 2px;color:#7a5c2e}

@@ -22,15 +22,66 @@ const markLayer = new THREE.Group(); scene.add(markLayer);
 const sideMat = new THREE.MeshStandardMaterial({ map: canvasTexture(woodCanvas(256, 96, '#c58f42', 21)), roughness: 0.7 });
 const topMat = new THREE.MeshStandardMaterial({ roughness: 0.55 });
 let boardTex = null, boardMesh = null;
+/* ---------- 판 모양 · 배경 고르기 (바둑에 방해되지 않는 차분한 배경만) ---------- */
+const SKINS = [
+  { id: 'kaya', name: '카야(기본)', base: '#e0ac5c', line: '#3a2a14', star: '#2b1d0e', side: '#c58f42' },
+  { id: 'bija', name: '비자', base: '#ecc87a', line: '#4a3418', star: '#33220f', side: '#d6a850' },
+  { id: 'bamboo', name: '대나무', base: '#d9cc8c', line: '#403a1c', star: '#2d2812', side: '#b9aa66' },
+  { id: 'walnut', name: '호두', base: '#b98650', line: '#241609', star: '#160d05', side: '#8c5f32' },
+  { id: 'slate', name: '석판', base: '#a3abb2', line: '#2a3036', star: '#1c2126', side: '#7c858d' },
+];
+const SCENES = [
+  { id: 'study', name: '서재', sky: ['#4b3b27', '#4b3b27'], floor: 0x33402f, fog: 0x4b3b27, sw: 'linear-gradient(#4b3b27,#33402f)' },
+  { id: 'mountain', name: '산 위', sky: ['#8dbbe6', '#e6f0f8'], floor: 0xa9a79d, fog: 0xdbe7f1, deco: 'mountain', sw: 'linear-gradient(#8dbbe6,#dbe7f1 55%,#a9a79d 56%)' },
+  { id: 'sea', name: '바다 위', sky: ['#78b4d8', '#d6edf4'], floor: 0x7a5c3a, fog: 0x5b97b5, deco: 'sea', sw: 'linear-gradient(#78b4d8,#d6edf4 45%,#2f7fa3 46%,#1d5d82)' },
+  { id: 'sky', name: '하늘 위', sky: ['#4f8fd8', '#cfe5fb'], floor: 0xf2f5fb, fog: 0xe3edf9, deco: 'cloud', sw: 'linear-gradient(#4f8fd8,#cfe5fb 60%,#f2f5fb 61%)' },
+  { id: 'night', name: '달밤', sky: ['#0d1a33', '#2a3b66'], floor: 0x2b3550, fog: 0x1f2c4b, deco: 'night', sw: 'linear-gradient(#0d1a33,#2a3b66 60%,#2b3550 61%)' },
+  { id: 'calm', name: '고요(단색)', sky: ['#2c2c31', '#2c2c31'], floor: 0x3a3a41, fog: 0x2c2c31, sw: 'linear-gradient(#2c2c31,#3a3a41)' },
+];
+const LOOK_KEY = 'baduk_look_v1';
+const look = (() => { try { return Object.assign({ board: 'kaya', scene: 'study' }, JSON.parse(localStorage.getItem(LOOK_KEY) || '{}')); } catch (e) { return { board: 'kaya', scene: 'study' }; } })();
+let SKIN = SKINS.find((k) => k.id === look.board) || SKINS[0];
+function sceneTexture(sc) {
+  const W = 1024, H = 1024, c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d');
+  const gr = g.createLinearGradient(0, 0, 0, H * 0.75); gr.addColorStop(0, sc.sky[0]); gr.addColorStop(1, sc.sky[1]); g.fillStyle = gr; g.fillRect(0, 0, W, H);
+  let seed = 11; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+  const hz = H * 0.5;
+  if (sc.deco === 'mountain') { [['#b4c8dc', 0.16, 0.9], ['#93aac3', 0.12, 1.3], ['#7890ac', 0.08, 1.8]].forEach(([col, hh, f], li) => { g.fillStyle = col; g.beginPath(); g.moveTo(0, H); for (let x = 0; x <= W; x += 16) g.lineTo(x, hz - H * hh * (0.6 + 0.4 * Math.sin(x * 0.006 * f + li * 2) + 0.25 * Math.sin(x * 0.019 * f + li))); g.lineTo(W, H); g.fill(); }); }
+  else if (sc.deco === 'sea') { const sg = g.createLinearGradient(0, hz, 0, H); sg.addColorStop(0, '#5aa0c0'); sg.addColorStop(1, '#2d6f93'); g.fillStyle = sg; g.fillRect(0, hz, W, H - hz); g.strokeStyle = 'rgba(255,255,255,.22)'; g.lineWidth = 2; for (let i = 0; i < 70; i++) { const y = hz + 6 + rnd() * (H - hz), x = rnd() * W, l = 20 + (y - hz) * 0.25 * rnd() + 10; g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + l / 2, y - 3, x + l, y); g.stroke(); } }
+  else if (sc.deco === 'cloud') { for (let i = 0; i < 26; i++) { const x = rnd() * W, y = hz + rnd() * H * 0.45, r = 40 + rnd() * 90; const rg = g.createRadialGradient(x, y, 0, x, y, r); rg.addColorStop(0, 'rgba(255,255,255,.95)'); rg.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = rg; g.fillRect(x - r, y - r, 2 * r, 2 * r); } }
+  else if (sc.deco === 'night') { for (let i = 0; i < 140; i++) { g.fillStyle = 'rgba(255,255,255,' + (0.3 + rnd() * 0.6) + ')'; const r = rnd() < 0.1 ? 2 : 1; g.fillRect(rnd() * W, rnd() * hz, r, r); } const mg = g.createRadialGradient(W * 0.8, H * 0.14, 0, W * 0.8, H * 0.14, 90); mg.addColorStop(0, 'rgba(255,248,220,1)'); mg.addColorStop(0.25, 'rgba(255,244,205,.95)'); mg.addColorStop(1, 'rgba(255,244,205,0)'); g.fillStyle = mg; g.fillRect(W * 0.8 - 90, H * 0.14 - 90, 180, 180); }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+const floorMesh = scene.children.find((o) => o.geometry && o.geometry.type === 'CircleGeometry'); const fitFloor = () => { if (floorMesh) floorMesh.scale.setScalar(HALF * 1.9 / floorMesh.geometry.parameters.radius); };
+let bgTex = null;
+function applyLook() {
+  const sc = SCENES.find((q) => q.id === look.scene) || SCENES[0];
+  if (bgTex) bgTex.dispose(); bgTex = sceneTexture(sc); scene.background = bgTex; scene.fog.color.setHex(sc.fog); if (floorMesh) floorMesh.material.color.setHex(sc.floor);
+  SKIN = SKINS.find((k) => k.id === look.board) || SKINS[0];
+  if (sideMat.map) sideMat.map.dispose(); sideMat.map = canvasTexture(woodCanvas(256, 96, SKIN.side, 21)); sideMat.needsUpdate = true;
+  if (boardMesh) buildBoard(N); poke(500);
+}
+function saveLook() { try { localStorage.setItem(LOOK_KEY, JSON.stringify(look)); } catch (e) {} }
+function openLook() {
+  document.querySelectorAll('.oks-overlay').forEach((x) => x.remove()); const ov = document.createElement('div'); ov.className = 'oks-overlay'; ov.style.zIndex = 90;
+  const draw = () => {
+    ov.innerHTML = '<div class="ch-card go-look"><h2>판과 배경 고르기</h2><h4>바둑판</h4><div class="sw-row">' + SKINS.map((k) => '<button type="button" class="sw' + (k.id === look.board ? ' on' : '') + '" data-b="' + k.id + '"><i class="sw-board" style="background-color:' + k.base + ';--ln:' + k.line + '"></i><span>' + k.name + '</span></button>').join('') + '</div><h4>배경</h4><div class="sw-row">' + SCENES.map((k) => '<button type="button" class="sw' + (k.id === look.scene ? ' on' : '') + '" data-s="' + k.id + '"><i class="sw-scene" style="background:' + k.sw + '"></i><span>' + k.name + '</span></button>').join('') + '</div><p class="go-src">바둑에 방해되지 않도록 배경은 차분하게 만들었습니다. 설정은 이 기기에 저장됩니다.</p><div class="ch-row"><button type="button" class="ch-chip" id="lookClose">닫기</button></div></div>';
+    ov.querySelectorAll('[data-b]').forEach((b) => { b.onclick = () => { look.board = b.dataset.b; saveLook(); applyLook(); draw(); }; });
+    ov.querySelectorAll('[data-s]').forEach((b) => { b.onclick = () => { look.scene = b.dataset.s; saveLook(); applyLook(); draw(); }; });
+    $('lookClose').onclick = () => { ov.remove(); $('menu').style.visibility = ''; };
+  };
+  document.body.appendChild(ov); $('menu').style.visibility = 'hidden'; draw(); ov.style.background = 'transparent'; ov.style.alignItems = 'flex-end'; ov.style.pointerEvents = 'none'; ov.firstChild.style.pointerEvents = 'auto'; ov.firstChild.style.maxHeight = '46vh'; ov.firstChild.style.overflow = 'auto';
+}
+
 const wx = (s) => ((s % N) - (N - 1) / 2) * SP, wz = (s) => (((s / N) | 0) - (N - 1) / 2) * SP;
 const STARS = { 19: [3, 9, 15], 13: [3, 6, 9] };
 function layout(n) { N = n; SP = Math.min(2.4, 17 / (n - 1)); HW = (n - 1) * SP / 2; EDGE = SP * 0.95 + 0.5; HALF = HW + EDGE; STONE_D = SP * 0.96; REST = 0.2 * STONE_D * 0.9; }
 function boardTexture(n) {
-  const px = 1536, c = woodCanvas(px, px, '#e0ac5c', 33), g = c.getContext('2d'), k = px / (2 * HALF), P = (i) => ((i - (n - 1) / 2) * SP + HALF) * k;
-  g.strokeStyle = '#3a2a14'; g.lineWidth = n >= 19 ? 2.4 : 3; g.beginPath();
+  const px = 1536, c = woodCanvas(px, px, SKIN.base, 33), g = c.getContext('2d'), k = px / (2 * HALF), P = (i) => ((i - (n - 1) / 2) * SP + HALF) * k;
+  g.strokeStyle = SKIN.line; g.lineWidth = n >= 19 ? 2.4 : 3; g.beginPath();
   for (let i = 0; i < n; i++) { g.moveTo(P(i), P(0)); g.lineTo(P(i), P(n - 1)); g.moveTo(P(0), P(i)); g.lineTo(P(n - 1), P(i)); }
   g.stroke(); g.lineWidth = 5; g.strokeRect(P(0), P(0), P(n - 1) - P(0), P(n - 1) - P(0));
-  g.fillStyle = '#2b1d0e'; const r = n >= 19 ? 6 : 8;
+  g.fillStyle = SKIN.star; const r = n >= 19 ? 6 : 8;
   let pts = []; if (STARS[n]) STARS[n].forEach((a) => STARS[n].forEach((b) => pts.push([a, b]))); else if (n === 9) pts = [[2, 2], [6, 2], [2, 6], [6, 6], [4, 4]]; else if (n === 7 || n === 5) pts = [[(n - 1) / 2, (n - 1) / 2]];
   pts.forEach(([a, b]) => { g.beginPath(); g.arc(P(a), P(b), r, 0, 7); g.fill(); });
   return canvasTexture(c, 8);
@@ -40,7 +91,7 @@ function buildBoard(n) {
   if (boardTex) boardTex.dispose(); boardTex = boardTexture(n); topMat.map = boardTex; topMat.needsUpdate = true;
   boardMesh = new THREE.Mesh(new THREE.BoxGeometry(2 * HALF, 1.6, 2 * HALF), [sideMat, sideMat, topMat, sideMat, sideMat, sideMat]); boardMesh.position.y = -0.8; boardMesh.receiveShadow = true; boardMesh.castShadow = true; boardGroup.add(boardMesh);
   const foot = new THREE.BoxGeometry(HALF * 0.34, 0.9, HALF * 0.34); [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => { const f = new THREE.Mesh(foot, sideMat); f.position.set(a * HALF * 0.78, -2.0, b * HALF * 0.78); f.castShadow = true; boardGroup.add(f); });
-  S.setExtent(1.66 * HALF); poke(400);
+  S.setExtent(1.66 * HALF); fitFloor(); poke(400);
 }
 
 /* ---------- 바둑돌 (GLB) ---------- */
@@ -327,7 +378,7 @@ function startWrong() {
 const WORDS = [['활로', '돌 바로 옆(위·아래·왼쪽·오른쪽)의 빈 점이에요. 돌이 숨 쉬는 구멍이에요.'], ['단수', '활로가 딱 1개만 남은 위험한 상태예요. 하나만 더 막히면 잡혀요.'], ['따내기', '활로가 0이 된 돌을 판에서 들어내는 거예요.'], ['집', '내 돌로 둘러싼 빈 곳이에요. 집이 많은 쪽이 이겨요.'], ['덤', '흑이 먼저 두는 대신 백에게 주는 점수예요(6.5집).'], ['귀 · 변 · 중앙', '판의 모서리 · 가장자리 · 가운데예요. 초반에는 귀 → 변 → 중앙 순서로 둬요.'], ['화점 · 소목 · 삼삼', '귀에서 많이 두는 자리예요(4-4 · 3-4 · 3-3). 줄 번호는 가장자리가 1줄이에요.'], ['걸침', '상대가 차지한 귀의 돌에 가까이 두어 방해하는 수예요.'], ['벌림', '내 돌에서 변을 따라 멀리 두어 집 모양을 넓히는 수예요.'], ['굳힘', '내 귀의 돌 옆에 한 수 더 두어 귀를 단단하게 하는 수예요.'], ['날일자 · 눈목자 · 한 칸 뜀', '날일자는 내 돌과 대각선으로 놓는 모양, 눈목자는 말처럼 한 칸 건너 대각선으로 뛰는 모양, 한 칸 뜀은 곧게 한 칸 떨어져 두는 모양이에요.'], ['선수 · 후수', '선수는 상대가 꼭 받아야 하는 수, 후수는 안 받아도 되는 수예요. 선수를 먼저 쓰고 큰 곳으로 가요.'], ['끝내기', '집의 경계를 마지막으로 정리하는 단계예요. 큰 곳부터 둬요.'], ['세력(두터움)', '집은 아니지만 돌이 힘차게 서 있는 벽이에요. 나중에 공격에 쓸 수 있어요.'], ['접바둑', '실력 차이를 줄이려고 약한 쪽이 흑으로 돌을 미리 놓고 시작하는 거예요.']];
 function showWords() {
   document.querySelectorAll('.oks-overlay').forEach((x) => x.remove()); const ov = document.createElement('div'); ov.className = 'oks-overlay'; ov.style.zIndex = 90;
-  ov.innerHTML = '<div class="ch-card go-words"><h2>📖 바둑 낱말 풀이</h2><dl>' + WORDS.map((w) => '<dt>' + w[0] + '</dt><dd>' + w[1] + '</dd>').join('') + '</dl><div class="ch-row"><button type="button" class="ch-chip" id="wordsRead">🔊 읽어 주기</button><button type="button" class="ch-chip" id="wordsClose">닫기</button></div></div>';
+  ov.innerHTML = '<div class="ch-card go-words"><h2>바둑 용어 사전</h2><dl>' + WORDS.map((w) => '<dt>' + w[0] + '</dt><dd>' + w[1] + '</dd>').join('') + '</dl><div class="ch-row"><button type="button" class="ch-chip" id="wordsRead">🔊 읽어 주기</button><button type="button" class="ch-chip" id="wordsClose">닫기</button></div></div>';
   document.body.appendChild(ov); $('wordsClose').onclick = () => ov.remove(); $('wordsRead').onclick = () => { O.unlock(); O.say(WORDS.map((w) => w[0] + '. ' + w[1]).join(' ')); };
 }
 /* ---------- 실력 진단: 단계마다 한 문제씩 풀어 보고, 어디서부터 시작하면 좋을지 알려 줘요 ---------- */
@@ -374,10 +425,10 @@ function openCurriculum() {
   }).join('');
   const wn = Object.keys(loadWrong()).length, wd = wrongPool(true).length;
   el.innerHTML = '<div class="ch-card go-map"><h2>바둑길 · 교재 목차</h2><div class="go-rank">현재 급수 <b>' + C.rankName(rk.rank) + '</b>' + (nxtRank ? ' · 다음 목표 <b>' + C.rankName(nxtRank) + '</b>' : ' · 최고 단계에 도달했습니다') + '<small>급수는 이 앱의 학습 기준이며 공식 급수와 다릅니다.</small></div>' +
-    '<button type="button" class="ch-btn big" id="diagBtn">🧭 실력 진단 · 어느 장부터 시작할까요?</button>' + (wn ? '<button type="button" class="ch-btn big go" id="wrongBtn">📕 오답노트 · 틀린 문제 ' + wn + '개' + (wd ? ' (복습할 때: ' + wd + '개)' : '') + '</button>' : '') + chs + '<div class="ch-row"><button type="button" class="ch-chip" id="wordsBtn2">📖 용어 사전</button><button type="button" class="ch-chip" id="mapBack">← 처음 화면</button></div><p class="go-src">공개 기보: CWI 바둑 기보 데이터베이스(Jan van der Steen 외). 정석·용어 해설은 앱 제작자가 정리한 것으로, 전문가 검수를 거쳐 계속 보완합니다.</p></div>';
+    '<button type="button" class="ch-btn big" id="diagBtn">🧭 실력 진단 · 어느 장부터 시작할까요?</button>' + (wn ? '<button type="button" class="ch-btn big go" id="wrongBtn">📕 오답노트 · 틀린 문제 ' + wn + '개' + (wd ? ' (복습할 때: ' + wd + '개)' : '') + '</button>' : '') + chs + '<div class="ch-row"><button type="button" class="ch-chip" id="wordsBtn2">📖 용어 사전</button><button type="button" class="ch-chip" id="lookBtn2">🎨 판·배경</button><button type="button" class="ch-chip" id="mapBack">← 처음 화면</button></div><p class="go-src">공개 기보: CWI 바둑 기보 데이터베이스(Jan van der Steen 외). 정석·용어 해설은 앱 제작자가 정리한 것으로, 전문가 검수를 거쳐 계속 보완합니다.</p></div>';
   el.querySelectorAll('[data-id]').forEach((b) => { b.onclick = () => { O.unlock(); startLesson(b.dataset.id); }; });
   el.querySelectorAll('[data-exam]').forEach((b) => { b.onclick = () => { O.unlock(); startExam(b.dataset.exam); }; });
-  $('diagBtn').onclick = () => { O.unlock(); startDiag(); }; $('wordsBtn2').onclick = showWords;
+  $('diagBtn').onclick = () => { O.unlock(); startDiag(); }; $('wordsBtn2').onclick = showWords; $('lookBtn2').onclick = openLook;
   if ($('wrongBtn')) $('wrongBtn').onclick = () => { O.unlock(); startWrong(); };
   $('mapBack').onclick = () => openMenu(false); const nx = el.querySelector('.next'); if (nx && nx.scrollIntoView) setTimeout(() => nx.scrollIntoView({ block: 'center' }), 50);
 }
@@ -555,14 +606,14 @@ function openMenu(fromFinish) {
     }
     el.innerHTML = '<div class="ch-card"><h1>바둑길</h1><p>집을 더 많이 차지하면 이기는 바둑이에요.</p><div class="ch-modes">' +
       modes.map((m) => '<button type="button" class="ch-mode' + (sel.mode === m[0] ? ' on' : '') + '" data-mode="' + m[0] + '"><i>' + m[1] + '</i><b>' + m[2] + '</b><span>' + m[3] + '</span></button>').join('') + '</div>' + opt +
-      '<button type="button" class="ch-go" id="goBtn">' + (sel.mode === 'learn' ? '수업 고르기' : sel.mode === 'kibo' ? '기보 고르기' : '시작!') + '</button>' + '<div class="ch-row"><button type="button" class="ch-chip" id="wordsBtn">📖 낱말 풀이</button></div>' + (mode && !fromFinish ? '<div class="ch-row"><button type="button" class="ch-chip" id="closeMenu">닫기</button></div>' : '') + '</div>';
+      '<button type="button" class="ch-go" id="goBtn">' + (sel.mode === 'learn' ? '수업 고르기' : sel.mode === 'kibo' ? '기보 고르기' : '시작!') + '</button>' + '<div class="ch-row"><button type="button" class="ch-chip" id="wordsBtn">📖 용어 사전</button><button type="button" class="ch-chip" id="lookBtn">🎨 판·배경</button></div>' + (mode && !fromFinish ? '<div class="ch-row"><button type="button" class="ch-chip" id="closeMenu">닫기</button></div>' : '') + '</div>';
     el.querySelectorAll('[data-mode]').forEach((b) => { b.onclick = () => { sel.mode = b.dataset.mode; O.unlock(); O.sfx('tick'); render(); }; });
     el.querySelectorAll('[data-n]').forEach((b) => { b.onclick = () => { sel.n = +b.dataset.n; render(); }; });
     el.querySelectorAll('[data-plv]').forEach((b) => { b.onclick = () => { sel.playLv = +b.dataset.plv; render(); }; });
     el.querySelectorAll('[data-color]').forEach((b) => { b.onclick = () => { sel.color = +b.dataset.color; render(); }; });
     el.querySelectorAll('[data-hc]').forEach((b) => { b.onclick = () => { sel.handicap = +b.dataset.hc; render(); }; });
     el.querySelectorAll('[data-strat]').forEach((b) => { b.onclick = () => { sel.strategy = +b.dataset.strat === 1; render(); }; });
-    $('wordsBtn').onclick = showWords; const cm = $('closeMenu'); if (cm) cm.onclick = () => { el.hidden = true; };
+    $('wordsBtn').onclick = showWords; $('lookBtn').onclick = openLook; const cm = $('closeMenu'); if (cm) cm.onclick = () => { el.hidden = true; };
     $('goBtn').onclick = () => { O.unlock(); Object.assign(prefs, { mode: sel.mode, n: sel.n, color: sel.color, handicap: sel.handicap, strategy: sel.strategy }); savePrefs();
       if (sel.mode === 'learn') openCurriculum();
       else if (sel.mode === 'kibo') openKibo();
@@ -683,7 +734,7 @@ S.onFrame((dt, t) => { const k = 1 + Math.sin(t * 5) * 0.1; markPool.forEach((m)
 
 (async function boot() {
   try { await loadStones(); } catch (e) { S.failLoading('바둑돌 모델을 불러오지 못했어요.'); return; }
-  buildBoard(9); newBoard(9); S.start(); S.setView(0, true, 0.62); S.hideLoading(); say('메뉴를 골라 주세요.', null, false); updateButtons(); startWorker(); openMenu(true);
+  applyLook(); buildBoard(9); newBoard(9); S.start(); S.setView(0, true, 0.62); S.hideLoading(); say('메뉴를 골라 주세요.', null, false); updateButtons(); startWorker(); openMenu(true);
 })();
 
 /* 시험용 손잡이 */
