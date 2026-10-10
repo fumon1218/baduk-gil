@@ -31,6 +31,7 @@ const SKINS = [
   { id: 'cheonggang', name: '청강석', base: '#5c6670', line: '#dfe5ec', star: '#eef2f6', side: '#4a535c', img: 'assets/board-cheonggang.webp' },
   { id: 'cheonggang-light', name: '청강석(연)', base: '#8a9db0', line: '#18222c', star: '#101820', side: '#6f8296', img: 'assets/board-cheonggang-light.webp' },
   { id: 'cheonggang-deep', name: '청강석(심)', base: '#3f4a5a', line: '#e3e9f0', star: '#f2f5f8', side: '#323b49', img: 'assets/board-cheonggang-deep.webp' },
+  { id: 'jade', name: '청옥', base: '#3e7f8c', line: '#08161c', star: '#050e12', side: '#2f6571', img: 'assets/board-jade.webp' },
   { id: 'slate', name: '석판', base: '#a3abb2', line: '#2a3036', star: '#1c2126', side: '#7c858d', img: 'assets/board-slate.webp' },
 ];
 const SCENES = [
@@ -41,9 +42,16 @@ const SCENES = [
   { id: 'night', img: 'assets/bg-night.webp', name: '달밤', sky: ['#0d1a33', '#2a3b66'], floor: 0x2b3550, fog: 0x1f2c4b, deco: 'night', sw: 'linear-gradient(#0d1a33,#2a3b66 60%,#2b3550 61%)' },
   { id: 'calm', name: '고요(단색)', sky: ['#2c2c31', '#2c2c31'], floor: 0x3a3a41, fog: 0x2c2c31, sw: 'linear-gradient(#2c2c31,#3a3a41)' },
 ];
+const MODELS = [
+  { id: 'soban', name: '소반', sub: '낮고 단정한 판', T: 1.6, L: 0.9, legs: 'block' },
+  { id: 'jokban', name: '족반', sub: '두꺼운 통판과 꽃다리', T: 5.0, L: 2.8, legs: 'bulb', side: 'assets/side-endgrain.webp' },
+  { id: 'jangsik', name: '장식반', sub: '조각 측면과 금테', T: 3.2, L: 1.7, legs: 'scallop', trim: 0xc9a24b, side: 'assets/side-carved.webp' },
+  { id: 'najeon', name: '나전반', sub: '칠기 위 자개 장식', T: 2.2, L: 2.5, legs: 'arch', trim: 0xe8d9a8, side: 'assets/side-najeon.webp', top: 'assets/board-najeon.webp' },
+];
 const LOOK_KEY = 'baduk_look_v1';
-const look = (() => { try { return Object.assign({ board: 'kaya', scene: 'study' }, JSON.parse(localStorage.getItem(LOOK_KEY) || '{}')); } catch (e) { return { board: 'kaya', scene: 'study' }; } })();
+const look = (() => { try { return Object.assign({ board: 'kaya', scene: 'study', model: 'soban' }, JSON.parse(localStorage.getItem(LOOK_KEY) || '{}')); } catch (e) { return { board: 'kaya', scene: 'study', model: 'soban' }; } })();
 let SKIN = SKINS.find((k) => k.id === look.board) || SKINS[0];
+let MODEL = MODELS.find((k) => k.id === look.model) || MODELS[0];
 const imgCache = {};
 function getImg(src, done) { let im = imgCache[src]; if (!im) { im = imgCache[src] = new Image(); im.cbs = []; im.onload = () => { im.ok = true; const l = im.cbs; im.cbs = []; l.forEach((f) => f()); }; im.onerror = () => { im.bad = true; }; im.src = src; } if (!im.ok && done) im.cbs.push(done); return im.ok ? im : null; }
 function sceneTexture(sc) {
@@ -65,15 +73,23 @@ function applyLook() {
   const sc = SCENES.find((q) => q.id === look.scene) || SCENES[0];
   if (bgTex) bgTex.dispose(); bgTex = sceneTexture(sc); scene.background = bgTex;
   if (sc.img) { const sref = sc, im = getImg(sc.img, () => { if (look.scene === sref.id) applyLook(); }); if (im) { bgTex.dispose(); bgTex = new THREE.Texture(im); bgTex.colorSpace = THREE.SRGBColorSpace; bgTex.needsUpdate = true; bgTex.wrapS = bgTex.wrapT = THREE.ClampToEdgeWrapping; bgTex.userData.ar = im.width / im.height; scene.background = bgTex; fitBg(); } } scene.fog.color.setHex(sc.fog); if (floorMesh) floorMesh.material.color.setHex(sc.floor);
-  SKIN = SKINS.find((k) => k.id === look.board) || SKINS[0];
-  if (sideMat.map) sideMat.map.dispose(); { const c = woodCanvas(256, 96, SKIN.side, 21), simg = SKIN.img && getImg(SKIN.img, () => { applyLook(); }); if (simg) { const g = c.getContext('2d'); g.drawImage(simg, 0, 0, 256, 96); g.fillStyle = 'rgba(0,0,0,.28)'; g.fillRect(0, 0, 256, 96); } sideMat.map = canvasTexture(c); sideMat.needsUpdate = true; }
+  SKIN = SKINS.find((k) => k.id === look.board) || SKINS[0]; MODEL = MODELS.find((k) => k.id === look.model) || MODELS[0];
+  if (sideMat.map) sideMat.map.dispose(); { const c = woodCanvas(256, 96, SKIN.side, 21), g = c.getContext('2d'), mim = MODEL.side && getImg(MODEL.side, () => { applyLook(); });
+    if (mim) g.drawImage(mim, 0, 0, 256, 96); else { const simg = SKIN.img && getImg(SKIN.img, () => { applyLook(); }); if (simg) { g.drawImage(simg, 0, 0, 256, 96); g.fillStyle = 'rgba(0,0,0,.28)'; g.fillRect(0, 0, 256, 96); } }
+    sideMat.map = canvasTexture(c); sideMat.needsUpdate = true; }
   if (boardMesh) buildBoard(N); poke(500);
 }
 function saveLook() { try { localStorage.setItem(LOOK_KEY, JSON.stringify(look)); } catch (e) {} }
+function modelIcon(k) {
+  const t = 4 + k.T * 2.2, top = 12, legs = { block: '<rect x="12" y="%y" width="8" height="%h" fill="#6b4a25"/><rect x="52" y="%y" width="8" height="%h" fill="#6b4a25"/>', bulb: '<ellipse cx="18" cy="%m" rx="5" ry="%hh" fill="#6b4a25"/><ellipse cx="54" cy="%m" rx="5" ry="%hh" fill="#6b4a25"/>', scallop: '<rect x="14" y="%y" width="44" height="%h" rx="6" fill="#6b4a25"/>', arch: '<rect x="10" y="%y" width="3" height="%h" fill="#6b4a25"/><rect x="59" y="%y" width="3" height="%h" fill="#6b4a25"/>' }[k.legs];
+  const y = top + t, h = Math.min(50 - y, 6 + k.L * 4);
+  return '<svg viewBox="0 0 72 54" width="100%" height="54"><polygon points="8,' + top + ' 64,' + top + ' 70,' + (top + 8) + ' 2,' + (top + 8) + '" fill="#d7b87a"/><rect x="2" y="' + (top + 8) + '" width="68" height="' + (t - 6) + '" fill="#b98c4c"/>' + (k.trim ? '<rect x="2" y="' + (top + 8) + '" width="68" height="2" fill="#c9a24b"/>' : '') + legs.replace(/%hh/g, h / 2).replace(/%y/g, y).replace(/%h/g, h).replace(/%m/g, y + h / 2) + '</svg>';
+}
 function openLook() {
   document.querySelectorAll('.oks-overlay').forEach((x) => x.remove()); const ov = document.createElement('div'); ov.className = 'oks-overlay'; ov.style.zIndex = 90;
   const draw = () => {
-    ov.innerHTML = '<div class="ch-card go-look"><h2>판과 배경 고르기</h2><h4>바둑판</h4><div class="sw-row">' + SKINS.map((k) => '<button type="button" class="sw' + (k.id === look.board ? ' on' : '') + '" data-b="' + k.id + '"><i class="sw-board" style="background-color:' + k.base + ';background-image:url(' + k.img + ');--ln:' + k.line + '"></i><span>' + k.name + '</span></button>').join('') + '</div><h4>배경</h4><div class="sw-row">' + SCENES.map((k) => '<button type="button" class="sw' + (k.id === look.scene ? ' on' : '') + '" data-s="' + k.id + '"><i class="sw-scene" style="background:' + k.sw + '"></i><span>' + k.name + '</span></button>').join('') + '</div><p class="go-src">바둑에 방해되지 않도록 배경은 차분하게 만들었습니다. 설정은 이 기기에 저장됩니다.</p><div class="ch-row"><button type="button" class="ch-chip" id="lookClose">닫기</button></div></div>';
+    ov.innerHTML = '<div class="ch-card go-look"><h2>판과 배경 고르기</h2><h4>판 모양</h4><div class="sw-row">' + MODELS.map((k) => '<button type="button" class="sw' + (k.id === look.model ? ' on' : '') + '" data-m="' + k.id + '"><i class="sw-model">' + modelIcon(k) + '</i><span>' + k.name + '</span></button>').join('') + '</div><h4>바둑판 재질</h4><div class="sw-row">' + SKINS.map((k) => '<button type="button" class="sw' + (k.id === look.board ? ' on' : '') + '" data-b="' + k.id + '"><i class="sw-board" style="background-color:' + k.base + ';background-image:url(' + k.img + ');--ln:' + k.line + '"></i><span>' + k.name + '</span></button>').join('') + '</div><h4>배경</h4><div class="sw-row">' + SCENES.map((k) => '<button type="button" class="sw' + (k.id === look.scene ? ' on' : '') + '" data-s="' + k.id + '"><i class="sw-scene" style="background:' + k.sw + '"></i><span>' + k.name + '</span></button>').join('') + '</div><p class="go-src">바둑에 방해되지 않도록 배경은 차분하게 만들었습니다. 설정은 이 기기에 저장됩니다.</p><div class="ch-row"><button type="button" class="ch-chip" id="lookClose">닫기</button></div></div>';
+    ov.querySelectorAll('[data-m]').forEach((b) => { b.onclick = () => { look.model = b.dataset.m; saveLook(); applyLook(); draw(); }; });
     ov.querySelectorAll('[data-b]').forEach((b) => { b.onclick = () => { look.board = b.dataset.b; saveLook(); applyLook(); draw(); }; });
     ov.querySelectorAll('[data-s]').forEach((b) => { b.onclick = () => { look.scene = b.dataset.s; saveLook(); applyLook(); draw(); }; });
     $('lookClose').onclick = () => { ov.remove(); $('menu').style.visibility = ''; };
@@ -85,12 +101,12 @@ const wx = (s) => ((s % N) - (N - 1) / 2) * SP, wz = (s) => (((s / N) | 0) - (N 
 const STARS = { 19: [3, 9, 15], 13: [3, 6, 9] };
 function layout(n) { N = n; SP = Math.min(2.4, 17 / (n - 1)); HW = (n - 1) * SP / 2; EDGE = SP * 0.95 + 0.5; HALF = HW + EDGE; STONE_D = SP * 0.96; REST = 0.2 * STONE_D * 0.9; }
 function boardTexture(n) {
-  const px = 1536, c = woodCanvas(px, px, SKIN.base, 33), g = c.getContext('2d'), sk = SKIN, simg = sk.img && getImg(sk.img, () => { if (boardMesh && SKIN === sk) buildBoard(N); }); if (simg) g.drawImage(simg, 0, 0, px, px);
+  const px = 1536, c = woodCanvas(px, px, MODEL.top ? '#2a1b12' : SKIN.base, 33), g = c.getContext('2d'), sk = SKIN, topSrc = MODEL.top || sk.img, simg = topSrc && getImg(topSrc, () => { if (boardMesh && SKIN === sk) buildBoard(N); }); if (simg) g.drawImage(simg, 0, 0, px, px);
   const k = px / (2 * HALF), P = (i) => ((i - (n - 1) / 2) * SP + HALF) * k;
-  g.strokeStyle = SKIN.line; g.lineWidth = n >= 19 ? 2.4 : 3; g.beginPath();
+  g.strokeStyle = MODEL.top ? '#d9c48a' : SKIN.line; g.lineWidth = n >= 19 ? 2.4 : 3; g.beginPath();
   for (let i = 0; i < n; i++) { g.moveTo(P(i), P(0)); g.lineTo(P(i), P(n - 1)); g.moveTo(P(0), P(i)); g.lineTo(P(n - 1), P(i)); }
   g.stroke(); g.lineWidth = 5; g.strokeRect(P(0), P(0), P(n - 1) - P(0), P(n - 1) - P(0));
-  g.fillStyle = SKIN.star; const r = n >= 19 ? 6 : 8;
+  g.fillStyle = MODEL.top ? '#e6d49c' : SKIN.star; const r = n >= 19 ? 6 : 8;
   let pts = []; if (STARS[n]) STARS[n].forEach((a) => STARS[n].forEach((b) => pts.push([a, b]))); else if (n === 9) pts = [[2, 2], [6, 2], [2, 6], [6, 6], [4, 4]]; else if (n === 7 || n === 5) pts = [[(n - 1) / 2, (n - 1) / 2]];
   pts.forEach(([a, b]) => { g.beginPath(); g.arc(P(a), P(b), r, 0, 7); g.fill(); });
   return canvasTexture(c, 8);
@@ -98,8 +114,16 @@ function boardTexture(n) {
 function buildBoard(n) {
   layout(n); while (boardGroup.children.length) { const m = boardGroup.children.pop(); if (m.geometry) m.geometry.dispose(); }
   if (boardTex) boardTex.dispose(); boardTex = boardTexture(n); topMat.map = boardTex; topMat.needsUpdate = true;
-  boardMesh = new THREE.Mesh(new THREE.BoxGeometry(2 * HALF, 1.6, 2 * HALF), [sideMat, sideMat, topMat, sideMat, sideMat, sideMat]); boardMesh.position.y = -0.8; boardMesh.receiveShadow = true; boardMesh.castShadow = true; boardGroup.add(boardMesh);
-  const foot = new THREE.BoxGeometry(HALF * 0.34, 0.9, HALF * 0.34); [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => { const f = new THREE.Mesh(foot, sideMat); f.position.set(a * HALF * 0.78, -2.0, b * HALF * 0.78); f.castShadow = true; boardGroup.add(f); });
+  const M = MODEL, T = M.T, L = M.L;
+  boardMesh = new THREE.Mesh(new THREE.BoxGeometry(2 * HALF, T, 2 * HALF), [sideMat, sideMat, topMat, sideMat, sideMat, sideMat]); boardMesh.position.y = -T / 2; boardMesh.receiveShadow = true; boardMesh.castShadow = true; boardGroup.add(boardMesh);
+  const addLeg = (geo, x, y, z) => { const f = new THREE.Mesh(geo, sideMat); f.position.set(x, y, z); f.castShadow = true; f.receiveShadow = true; boardGroup.add(f); };
+  const corners = [[-1, -1], [1, -1], [-1, 1], [1, 1]];
+  if (M.legs === 'block') corners.forEach(([a, b]) => addLeg(new THREE.BoxGeometry(HALF * 0.34, L, HALF * 0.34), a * HALF * 0.78, -T - L / 2, b * HALF * 0.78));
+  else if (M.legs === 'bulb') { const r = HALF * 0.1, pts = [[0.001, 0], [r * 0.95, 0], [r * 1.25, L * 0.1], [r * 0.75, L * 0.28], [r * 0.5, L * 0.42], [r * 0.95, L * 0.66], [r * 1.35, L * 0.82], [r * 0.9, L]].map(([x, y]) => new THREE.Vector2(x, y)); const lg = new THREE.LatheGeometry(pts, 20); corners.forEach(([a, b]) => addLeg(lg, a * HALF * 0.72, -T - L, b * HALF * 0.72)); boardGroup.children.slice(-4).forEach((m) => { m.position.y = -T - L; }); }
+  else if (M.legs === 'scallop') [-1, 1].forEach((b) => addLeg(new THREE.BoxGeometry(HALF * 1.5, L, HALF * 0.16), 0, -T - L / 2, b * HALF * 0.8));
+  else if (M.legs === 'arch') { corners.forEach(([a, b]) => addLeg(new THREE.BoxGeometry(HALF * 0.09, L, HALF * 0.09), a * HALF * 0.93, -T - L / 2, b * HALF * 0.93)); addLeg(new THREE.BoxGeometry(2 * HALF * 1.06, 0.14, 2 * HALF * 1.06), 0, -T - L + 0.07, 0); }
+  if (M.trim) { const tm = new THREE.MeshStandardMaterial({ color: M.trim, metalness: 0.7, roughness: 0.3 }), w = 0.2; [[0, 1], [0, -1]].forEach(([, b]) => { const e = new THREE.Mesh(new THREE.BoxGeometry(2 * HALF + 0.05, 0.1, w), tm); e.position.set(0, -0.05, b * (HALF - w / 2)); boardGroup.add(e); }); [-1, 1].forEach((a) => { const e = new THREE.Mesh(new THREE.BoxGeometry(w, 0.1, 2 * HALF + 0.05), tm); e.position.set(a * (HALF - w / 2), -0.05, 0); boardGroup.add(e); const band = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.16, 2 * HALF + 0.08), tm); band.position.set(a * HALF, -T * 0.5, 0); boardGroup.add(band); }); }
+  if (floorMesh) floorMesh.position.y = -(T + L);
   S.setExtent(1.66 * HALF); fitFloor(); poke(400);
 }
 

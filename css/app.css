@@ -158,3 +158,5 @@ body.chess-page{background:#1c140d url(../assets/bg-wood.webp) center/cover fixe
 .sw span{display:block;font-size:13px;margin-top:4px}
 .go-look h4{margin:10px 0 2px;color:#7a5c2e}
 .sw-board{position:relative;background-size:cover;background-position:center}.sw-board::after{content:'';position:absolute;inset:0;border-radius:6px;background-image:repeating-linear-gradient(90deg,transparent 0 10px,var(--ln) 10px 11px),repeating-linear-gradient(0deg,transparent 0 10px,var(--ln) 10px 11px);opacity:.75}
+
+.sw-model{background:#f3ead4;border:1px solid rgba(0,0,0,.15)}
