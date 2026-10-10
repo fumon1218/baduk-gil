@@ -14,13 +14,13 @@ export function createStage(opt) {
   catch (e) { $('loading').innerHTML = '<div><p>이 기기에서는 3D 화면을 켤 수 없어요.<br>다른 기기에서 열어 주세요.</p><a class="ch-btn" href="../">← 놀이별로</a></div>'; throw e; }
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = opt.exposure;
-  renderer.shadowMap.enabled = !calm(); renderer.shadowMap.type = THREE.PCFShadowMap;
+  renderer.shadowMap.enabled = !calm(); renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   const scene = new THREE.Scene(); scene.background = new THREE.Color(opt.bg); scene.fog = new THREE.Fog(opt.bg, opt.extent * 4, opt.extent * 8);
   const camera = new THREE.PerspectiveCamera(40, 1, 0.5, opt.extent * 14);
   const controls = new OrbitControls(camera, canvas);
   controls.enablePan = false; controls.enableDamping = true; controls.dampingFactor = 0.12;
   controls.minPolarAngle = 0.15; controls.maxPolarAngle = 1.38; controls.rotateSpeed = 0.7; controls.target.set(0, opt.targetY, 0);
-  scene.add(new THREE.HemisphereLight(0xffffff, 0x8a8a90, 1.2));
+  const hemi = new THREE.HemisphereLight(0xffffff, 0x8a8a90, 1.2); scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xfff3dd, 2.3); sun.position.set(...opt.sunPos); sun.castShadow = !calm(); sun.shadow.mapSize.set(2048, 2048);
   const e = opt.extent * 0.9; Object.assign(sun.shadow.camera, { left: -e, right: e, top: e, bottom: -e, near: 4, far: opt.extent * 5 }); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.03; scene.add(sun);
   const fill = new THREE.DirectionalLight(0xe4ecff, 0.6); fill.position.set(-10, 8, -9); scene.add(fill);
@@ -107,7 +107,7 @@ export function createStage(opt) {
   function hideLoading() { $('loading').classList.add('off'); setTimeout(() => { $('loading').hidden = true; }, 500); }
   function failLoading(txt) { $('loading').innerHTML = '<div><p>' + txt + '<br>인터넷 연결을 확인하고 다시 열어 주세요.</p><a class="ch-btn" href="../">← 놀이별로</a></div>'; }
 
-  return { THREE, O, $, canvas, renderer, scene, camera, controls, sun, calm, poke, tween, sleep, ease, say, note, setView, setExtent, resize, fitDistance, rayAt, planePoint, screenOf, onTap, wireButtons, hideLoading, failLoading,
+  return { THREE, O, $, canvas, renderer, scene, camera, controls, sun, hemi, calm, poke, tween, sleep, ease, say, note, setView, setExtent, resize, fitDistance, rayAt, planePoint, screenOf, onTap, wireButtons, hideLoading, failLoading,
     onFrame: (fn) => frameHooks.push(fn), setAlive: (fn) => { alive = fn; }, start: () => { resize(); requestAnimationFrame(frame); }, get tweenCount() { return tweens.length; } };
 }
 

@@ -11,7 +11,8 @@ const LEVEL_NAME = ['', '아주 쉬워요', '쉬워요', '보통', '어려워요
 const colName = (c) => (c > 0 ? '흑' : '백');
 const josa = (w, a, b) => { const c = w.charCodeAt(w.length - 1) - 0xac00; return c >= 0 && c <= 11171 && c % 28 !== 0 ? a : b; };
 
-const S = createStage({ extent: 17, bg: 0x4b3b27, tableColor: 0x33402f, tableY: -2.2, pol: 0.62, minDist: 25, targetY: 0, sunPos: [10, 22, 12] });
+const VIEW_POL = 0.78;
+const S = createStage({ extent: 17, bg: 0x4b3b27, tableColor: 0x33402f, tableY: -2.2, pol: 0.78, minDist: 25, targetY: 0, sunPos: [10, 22, 12] });
 const { $, scene, note, sleep, tween, ease, poke } = S;
 /* 화면에 나가는 모든 안내 글을 "~합니다"체로 맞춰요(원문은 그대로 두고 보여 줄 때만 바꿉니다) */
 const TN = (t) => (window.OKS_TONE ? window.OKS_TONE.tone(t) : t);
@@ -39,12 +40,12 @@ const SKINS = [
   { id: 'slate', name: '석판', base: '#a3abb2', line: '#2a3036', star: '#1c2126', side: '#7c858d', img: 'assets/board-slate.webp' },
 ];
 const SCENES = [
-  { id: 'study', name: '서재', sky: ['#4b3b27', '#4b3b27'], floor: 0x33402f, fog: 0x4b3b27, sw: 'linear-gradient(#4b3b27,#33402f)' },
-  { id: 'mountain', img: 'assets/bg-mountain.webp', name: '산 위', sky: ['#8dbbe6', '#e6f0f8'], floor: 0xa9a79d, fog: 0xdbe7f1, deco: 'mountain', sw: 'linear-gradient(#8dbbe6,#dbe7f1 55%,#a9a79d 56%)' },
-  { id: 'sea', img: 'assets/bg-sea.webp', name: '바다 위', sky: ['#78b4d8', '#d6edf4'], floor: 0x7a5c3a, fog: 0x5b97b5, deco: 'sea', sw: 'linear-gradient(#78b4d8,#d6edf4 45%,#2f7fa3 46%,#1d5d82)' },
-  { id: 'sky', img: 'assets/bg-sky.webp', name: '하늘 위', sky: ['#4f8fd8', '#cfe5fb'], floor: 0xf2f5fb, fog: 0xe3edf9, deco: 'cloud', sw: 'linear-gradient(#4f8fd8,#cfe5fb 60%,#f2f5fb 61%)' },
-  { id: 'night', img: 'assets/bg-night.webp', name: '달밤', sky: ['#0d1a33', '#2a3b66'], floor: 0x2b3550, fog: 0x1f2c4b, deco: 'night', sw: 'linear-gradient(#0d1a33,#2a3b66 60%,#2b3550 61%)' },
-  { id: 'calm', name: '고요(단색)', sky: ['#2c2c31', '#2c2c31'], floor: 0x3a3a41, fog: 0x2c2c31, sw: 'linear-gradient(#2c2c31,#3a3a41)' },
+  { id: 'study', name: '서재', sky: ['#4b3b27', '#4b3b27'], floor: 0x33402f, fog: 0x4b3b27, sw: 'linear-gradient(#4b3b27,#33402f)', room: 0x7a6650, lamp: 0xfff0d8, envI: 0.8, sun: [0xfff3dd, 2.0], hemi: 0.45 },
+  { id: 'mountain', img: 'assets/bg-mountain.webp', name: '산 위', sky: ['#8dbbe6', '#e6f0f8'], floor: 0xa9a79d, fog: 0xdbe7f1, deco: 'mountain', sw: 'linear-gradient(#8dbbe6,#dbe7f1 55%,#a9a79d 56%)', room: 0xa9c0d8, lamp: 0xffffff, envI: 0.9, sun: [0xfff6e0, 2.3], hemi: 0.5 },
+  { id: 'sea', img: 'assets/bg-sea.webp', name: '바다 위', sky: ['#78b4d8', '#d6edf4'], floor: 0x7a5c3a, fog: 0x5b97b5, deco: 'sea', sw: 'linear-gradient(#78b4d8,#d6edf4 45%,#2f7fa3 46%,#1d5d82)', room: 0x9fc4d8, lamp: 0xf4fbff, envI: 0.9, sun: [0xfffbf0, 2.3], hemi: 0.5 },
+  { id: 'sky', img: 'assets/bg-sky.webp', name: '하늘 위', sky: ['#4f8fd8', '#cfe5fb'], floor: 0xf2f5fb, fog: 0xe3edf9, deco: 'cloud', sw: 'linear-gradient(#4f8fd8,#cfe5fb 60%,#f2f5fb 61%)', room: 0xcfe0f4, lamp: 0xffffff, envI: 1.0, sun: [0xfffaf0, 2.2], hemi: 0.55 },
+  { id: 'night', img: 'assets/bg-night.webp', name: '달밤', sky: ['#0d1a33', '#2a3b66'], floor: 0x2b3550, fog: 0x1f2c4b, deco: 'night', sw: 'linear-gradient(#0d1a33,#2a3b66 60%,#2b3550 61%)', room: 0x1a2646, lamp: 0xb4c8ff, envI: 0.55, sun: [0xa9bcff, 1.1], hemi: 0.25 },
+  { id: 'calm', name: '고요(단색)', sky: ['#2c2c31', '#2c2c31'], floor: 0x3a3a41, fog: 0x2c2c31, sw: 'linear-gradient(#2c2c31,#3a3a41)', room: 0x55555c, lamp: 0xffffff, envI: 0.8, sun: [0xffffff, 1.9], hemi: 0.45 },
 ];
 const MODELS = [
   { id: 'soban', name: '소반', sub: '낮고 단정한 판', T: 1.6, L: 0.9, legs: 'block' },
@@ -76,8 +77,21 @@ function sceneTexture(sc) {
   else if (sc.deco === 'night') { for (let i = 0; i < 140; i++) { g.fillStyle = 'rgba(255,255,255,' + (0.3 + rnd() * 0.6) + ')'; const r = rnd() < 0.1 ? 2 : 1; g.fillRect(rnd() * W, rnd() * hz, r, r); } const mg = g.createRadialGradient(W * 0.8, H * 0.14, 0, W * 0.8, H * 0.14, 90); mg.addColorStop(0, 'rgba(255,248,220,1)'); mg.addColorStop(0.25, 'rgba(255,244,205,.95)'); mg.addColorStop(1, 'rgba(255,244,205,0)'); g.fillStyle = mg; g.fillRect(W * 0.8 - 90, H * 0.14 - 90, 180, 180); }
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
 }
-const floorMesh = scene.children.find((o) => o.geometry && o.geometry.type === 'CircleGeometry'); const fitFloor = () => { if (floorMesh) floorMesh.scale.setScalar(HALF * 1.9 / floorMesh.geometry.parameters.radius); };
-let bgTex = null;
+const floorMesh = scene.children.find((o) => o.geometry && o.geometry.type === 'CircleGeometry'); if (floorMesh) floorMesh.visible = false;
+const shadowCatcher = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.ShadowMaterial({ opacity: 0.32 })); shadowCatcher.rotation.x = -Math.PI / 2; shadowCatcher.receiveShadow = true; scene.add(shadowCatcher);
+const matMesh = new THREE.Mesh(new THREE.CircleGeometry(1, 64), new THREE.MeshStandardMaterial({ transparent: true, roughness: 0.95, depthWrite: false })); matMesh.rotation.x = -Math.PI / 2; matMesh.receiveShadow = true; matMesh.renderOrder = -1; scene.add(matMesh);
+function softMatTex(hex) { const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d'), col = '#' + hex.toString(16).padStart(6, '0'), gr = g.createRadialGradient(128, 128, 20, 128, 128, 128); gr.addColorStop(0, col); gr.addColorStop(0.55, col); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, 256, 256); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; }
+const fitFloor = () => { const y = -(MODEL.T + MODEL.L) + 0.01; shadowCatcher.position.y = y; matMesh.position.y = y + 0.005; matMesh.scale.setScalar(HALF * 1.75); };
+let bgTex = null, envTex = null;
+function applyLight(sc) {
+  const r = S.renderer, pm = new THREE.PMREMGenerator(r), es = new THREE.Scene();
+  es.add(new THREE.Mesh(new THREE.BoxGeometry(34, 18, 34), new THREE.MeshBasicMaterial({ color: sc.room, side: THREE.BackSide })));
+  const panel = (w, h, x, y, z, rx, ry, k) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: new THREE.Color(sc.lamp).multiplyScalar(k), side: THREE.DoubleSide, toneMapped: false })); m.position.set(x, y, z); m.rotation.set(rx, ry, 0); es.add(m); };
+  panel(14, 8, -4, 8.6, 3, Math.PI / 2, 0, 5); panel(6, 10, 15.5, 4, 0, 0, -Math.PI / 2, 2.2); panel(8, 6, -15.5, 5, -6, 0, Math.PI / 2, 1.6);
+  const t = pm.fromScene(es, 0.03).texture; pm.dispose(); if (envTex) envTex.dispose(); envTex = t; scene.environment = t; scene.environmentIntensity = sc.envI;
+  S.sun.color.setHex(sc.sun[0]); S.sun.intensity = sc.sun[1]; S.hemi.intensity = sc.hemi;
+  matMesh.material.map = softMatTex(sc.floor); matMesh.material.needsUpdate = true;
+}
 function fitBg() { const t = bgTex; if (!t || !t.userData.ar) return; const cv = $('gl'), va = (cv.clientWidth || 1) / (cv.clientHeight || 1), ia = t.userData.ar; if (va > ia) { t.repeat.set(1, ia / va); t.offset.set(0, (1 - ia / va) / 2); } else { t.repeat.set(va / ia, 1); t.offset.set((1 - va / ia) / 2, 0); } t.updateMatrix(); poke(300); }
 window.addEventListener('resize', fitBg);
 function applyLook() {
@@ -85,6 +99,7 @@ function applyLook() {
   if (bgTex) bgTex.dispose(); bgTex = sceneTexture(sc); scene.background = bgTex;
   if (sc.img) { const sref = sc, im = getImg(sc.img, () => { if (look.scene === sref.id) applyLook(); }); if (im) { bgTex.dispose(); bgTex = new THREE.Texture(im); bgTex.colorSpace = THREE.SRGBColorSpace; bgTex.needsUpdate = true; bgTex.wrapS = bgTex.wrapT = THREE.ClampToEdgeWrapping; bgTex.userData.ar = im.width / im.height; scene.background = bgTex; fitBg(); } } scene.fog.color.setHex(sc.fog); if (floorMesh) floorMesh.material.color.setHex(sc.floor);
   SKIN = SKINS.find((k) => k.id === look.board) || SKINS[0]; MODEL = MODELS.find((k) => k.id === look.model) || MODELS[0];
+  applyLight(sc);
   if (sideMat.map) sideMat.map.dispose(); { const c = woodCanvas(256, 96, SKIN.side, 21), g = c.getContext('2d'), mim = MODEL.side && getImg(MODEL.side, () => { applyLook(); });
     if (mim) g.drawImage(mim, 0, 0, 256, 96); else { const simg = SKIN.img && getImg(SKIN.img, () => { applyLook(); }); if (simg) { g.drawImage(simg, 0, 0, 256, 96); g.fillStyle = 'rgba(0,0,0,.28)'; g.fillRect(0, 0, 256, 96); } }
     sideMat.map = canvasTexture(c); sideMat.needsUpdate = true; }
@@ -116,43 +131,60 @@ function layout(n) { N = n; SP = Math.min(2.4, 17 / (n - 1)); HW = (n - 1) * SP 
 function boardTexture(n) {
   const px = 1536, c = woodCanvas(px, px, MODEL.top ? '#2a1b12' : SKIN.base, 33), g = c.getContext('2d'), sk = SKIN, topSrc = MODEL.top || sk.img, simg = topSrc && getImg(topSrc, () => { if (boardMesh && SKIN === sk) buildBoard(N); }); if (simg) g.drawImage(simg, 0, 0, px, px);
   const k = px / (2 * HALF), P = (i) => ((i - (n - 1) / 2) * SP + HALF) * k;
-  g.strokeStyle = MODEL.top ? '#d9c48a' : SKIN.line; g.lineWidth = n >= 19 ? 2.4 : 3; g.beginPath();
+  g.strokeStyle = MODEL.top ? '#d9c48a' : SKIN.line; g.lineWidth = n >= 19 ? 3 : 4.5; g.beginPath();
   for (let i = 0; i < n; i++) { g.moveTo(P(i), P(0)); g.lineTo(P(i), P(n - 1)); g.moveTo(P(0), P(i)); g.lineTo(P(n - 1), P(i)); }
   g.stroke(); g.lineWidth = 5; g.strokeRect(P(0), P(0), P(n - 1) - P(0), P(n - 1) - P(0));
-  g.fillStyle = MODEL.top ? '#e6d49c' : SKIN.star; const r = n >= 19 ? 6 : 8;
+  g.fillStyle = MODEL.top ? '#e6d49c' : SKIN.star; const r = n >= 19 ? 8 : 12;
   let pts = []; if (STARS[n]) STARS[n].forEach((a) => STARS[n].forEach((b) => pts.push([a, b]))); else if (n === 9) pts = [[2, 2], [6, 2], [2, 6], [6, 6], [4, 4]]; else if (n === 7 || n === 5) pts = [[(n - 1) / 2, (n - 1) / 2]];
   pts.forEach(([a, b]) => { g.beginPath(); g.arc(P(a), P(b), r, 0, 7); g.fill(); });
   return canvasTexture(c, 8);
 }
 const bowlGroup = new THREE.Group(); scene.add(bowlGroup);
 function buildBowls(floorDepth) {
-  while (bowlGroup.children.length) bowlGroup.children.pop();
+  while (bowlGroup.children.length) { const o = bowlGroup.children.pop(); if (o.dispose) o.dispose(); }
   const bw = BOWLS.find((q) => q.id === look.bowl); if (!bw || bw.id === 'none') return;
-  const R = Math.min(2.3, HALF * 0.26), H = R * 1.05, mat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.38, metalness: bw.id === 'urushi' ? 0.2 : 0 });
+  const R = Math.min(2.3, HALF * 0.26), H = R * 1.05, mat = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.42, metalness: bw.id === 'urushi' ? 0.15 : 0, clearcoat: 0.5, clearcoatRoughness: 0.25, side: THREE.DoubleSide });
   const im = getImg(bw.img, () => { if (look.bowl === bw.id) buildBoard(N); }); if (im) { const t = new THREE.Texture(im); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; t.needsUpdate = true; mat.map = t; } else mat.color.set(0x8a5a2b);
-  const body = new THREE.LatheGeometry([[0.01, 0], [R * 0.7, 0], [R * 0.95, H * 0.2], [R * 1.02, H * 0.5], [R * 0.9, H * 0.82], [R * 0.78, H]].map(([x, y]) => new THREE.Vector2(x, y)), 28);
-  const lid = new THREE.LatheGeometry([[0.01, H * 0.28], [R * 0.74, H * 0.2], [R * 0.86, 0], [R * 0.7, -H * 0.04], [0.01, -H * 0.04]].map(([x, y]) => new THREE.Vector2(x, y)), 28);
+  const V = (a) => a.map(([x, y]) => new THREE.Vector2(x, y));
+  const body = new THREE.LatheGeometry(V([[0.01, 0], [R * 0.66, 0], [R * 0.7, H * 0.05], [R * 0.95, H * 0.22], [R * 1.02, H * 0.5], [R * 0.92, H * 0.82], [R * 0.86, H], [R * 0.8, H * 1.01], [R * 0.76, H * 0.97], [R * 0.74, H * 0.7], [R * 0.6, H * 0.34], [0.01, H * 0.3]]), 40);
+  const lid = new THREE.LatheGeometry(V([[0.01, H * 0.3], [R * 0.3, H * 0.27], [R * 0.74, H * 0.2], [R * 0.9, H * 0.04], [R * 0.9, 0], [R * 0.8, 0], [R * 0.74, H * 0.1], [0.01, H * 0.12]]), 40);
   const knobMat = new THREE.MeshStandardMaterial({ color: 0xb08d3c, metalness: 0.8, roughness: 0.35 });
-  [[1, 0xf2f0ea], [-1, 0x1c1c20]].forEach(([c, col], i) => {
+  const dummy = new THREE.Object3D(); let seed = 7; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+  [[1, 0], [-1, 1]].forEach(([c, i]) => {
     const g = new THREE.Group(), b = new THREE.Mesh(body, mat); b.castShadow = true; b.receiveShadow = true; g.add(b);
-    const pile = new THREE.Mesh(new THREE.CylinderGeometry(R * 0.7, R * 0.7, H * 0.08, 24), new THREE.MeshStandardMaterial({ color: col, roughness: 0.3 })); pile.position.y = H * 0.9; g.add(pile);
-    const l = new THREE.Mesh(lid, mat); l.castShadow = true; l.position.set(R * 0.9, H * 1.02, R * 0.25); l.rotation.set(0.1, 0, -0.38); g.add(l);
-    const k = new THREE.Mesh(new THREE.SphereGeometry(R * 0.09, 12, 10), knobMat); k.position.set(R * 0.9 + Math.sin(0.38) * H * 0.28 * 0.9, H * 1.02 + H * 0.3, R * 0.25); g.add(k);
+    const proto = stoneProto[c];
+    if (proto) {
+      const cnt = 64, ss = STONE_D * 0.46, im2 = new THREE.InstancedMesh(proto.geometry, proto.material, cnt);
+      for (let k = 0; k < cnt; k++) {
+        const rr = Math.sqrt(rnd()) * R * 0.58, th = rnd() * 6.283, x = Math.cos(th) * rr, z = Math.sin(th) * rr, top = H * 0.9 - (rr / (R * 0.58)) * H * 0.07;
+        dummy.position.set(x, Math.min(top, H * 0.3 + (k / cnt) * H * 0.6) + (k > cnt * 0.55 ? 0.02 : 0), z); dummy.rotation.set((rnd() - 0.5) * 0.7, rnd() * 6.283, (rnd() - 0.5) * 0.7);
+        dummy.scale.set(ss, ss * 0.9, ss); dummy.updateMatrix(); im2.setMatrixAt(k, dummy.matrix);
+      }
+      im2.castShadow = true; im2.receiveShadow = true; g.add(im2);
+    }
     g.position.set(HALF + R * 1.9, -floorDepth, (i ? 1 : -1) * R * 1.35); bowlGroup.add(g);
+    const l = new THREE.Mesh(lid, mat); l.castShadow = true; l.receiveShadow = true;
+    const kn = new THREE.Mesh(new THREE.SphereGeometry(R * 0.09, 14, 10), knobMat); kn.position.set(0, H * 0.3, 0); l.add(kn);
+    l.position.set(HALF + R * 1.9, -floorDepth, (i ? 1 : -1) * R * 3.5); bowlGroup.add(l);
   });
 }
 function buildBoard(n) {
   layout(n); while (boardGroup.children.length) { const m = boardGroup.children.pop(); if (m.geometry) m.geometry.dispose(); }
   if (boardTex) boardTex.dispose(); boardTex = boardTexture(n); topMat.map = boardTex; topMat.needsUpdate = true;
   const M = MODEL, T = M.T, L = M.L;
-  boardMesh = new THREE.Mesh(new THREE.BoxGeometry(2 * HALF, T, 2 * HALF), [sideMat, sideMat, topMat, sideMat, sideMat, sideMat]); boardMesh.position.y = -T / 2; boardMesh.receiveShadow = true; boardMesh.castShadow = true; boardGroup.add(boardMesh);
+  const bv = Math.min(0.22, T * 0.2), tp = new THREE.PlaneGeometry(2 * (HALF - bv), 2 * (HALF - bv)); tp.rotateX(-Math.PI / 2);
+  { const pa = tp.attributes.position, ua = tp.attributes.uv; for (let i = 0; i < pa.count; i++) ua.setXY(i, (pa.getX(i) + HALF) / (2 * HALF), (pa.getZ(i) + HALF) / (2 * HALF)); }
+  const rimMat = M.trim ? new THREE.MeshStandardMaterial({ color: M.trim, metalness: 0.9, roughness: 0.28 }) : sideMat;
+  boardMesh = new THREE.Mesh(tp, topMat); boardMesh.receiveShadow = true; boardGroup.add(boardMesh);
+  const cham = new THREE.Mesh(new THREE.CylinderGeometry((HALF - bv) * Math.SQRT2, HALF * Math.SQRT2, bv, 4, 1, true), rimMat); cham.rotation.y = Math.PI / 4; cham.position.y = -bv / 2; cham.receiveShadow = true; boardGroup.add(cham);
+  const body = new THREE.Mesh(new THREE.BoxGeometry(2 * HALF, T - bv, 2 * HALF), sideMat); body.position.y = -bv - (T - bv) / 2; body.castShadow = true; body.receiveShadow = true; boardGroup.add(body);
   const addLeg = (geo, x, y, z) => { const f = new THREE.Mesh(geo, sideMat); f.position.set(x, y, z); f.castShadow = true; f.receiveShadow = true; boardGroup.add(f); };
   const corners = [[-1, -1], [1, -1], [-1, 1], [1, 1]];
   if (M.legs === 'block') corners.forEach(([a, b]) => addLeg(new THREE.BoxGeometry(HALF * 0.34, L, HALF * 0.34), a * HALF * 0.78, -T - L / 2, b * HALF * 0.78));
   else if (M.legs === 'bulb') { const r = HALF * 0.1, pts = [[0.001, 0], [r * 0.95, 0], [r * 1.25, L * 0.1], [r * 0.75, L * 0.28], [r * 0.5, L * 0.42], [r * 0.95, L * 0.66], [r * 1.35, L * 0.82], [r * 0.9, L]].map(([x, y]) => new THREE.Vector2(x, y)); const lg = new THREE.LatheGeometry(pts, 20); corners.forEach(([a, b]) => addLeg(lg, a * HALF * 0.72, -T - L, b * HALF * 0.72)); boardGroup.children.slice(-4).forEach((m) => { m.position.y = -T - L; }); }
   else if (M.legs === 'scallop') [-1, 1].forEach((b) => addLeg(new THREE.BoxGeometry(HALF * 1.5, L, HALF * 0.16), 0, -T - L / 2, b * HALF * 0.8));
   else if (M.legs === 'arch') { corners.forEach(([a, b]) => addLeg(new THREE.BoxGeometry(HALF * 0.09, L, HALF * 0.09), a * HALF * 0.93, -T - L / 2, b * HALF * 0.93)); addLeg(new THREE.BoxGeometry(2 * HALF * 1.06, 0.14, 2 * HALF * 1.06), 0, -T - L + 0.07, 0); }
-  if (M.trim) { const tm = new THREE.MeshStandardMaterial({ color: M.trim, metalness: 0.7, roughness: 0.3 }), w = 0.2; [[0, 1], [0, -1]].forEach(([, b]) => { const e = new THREE.Mesh(new THREE.BoxGeometry(2 * HALF + 0.05, 0.1, w), tm); e.position.set(0, -0.05, b * (HALF - w / 2)); boardGroup.add(e); }); [-1, 1].forEach((a) => { const e = new THREE.Mesh(new THREE.BoxGeometry(w, 0.1, 2 * HALF + 0.05), tm); e.position.set(a * (HALF - w / 2), -0.05, 0); boardGroup.add(e); const band = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.16, 2 * HALF + 0.08), tm); band.position.set(a * HALF, -T * 0.5, 0); boardGroup.add(band); }); }
+  if (M.trim) { const tm = new THREE.MeshStandardMaterial({ color: M.trim, metalness: 0.9, roughness: 0.28 }); const bd = new THREE.Mesh(new THREE.BoxGeometry(2 * HALF + 0.06, 0.12, 2 * HALF + 0.06), tm); bd.position.y = -T * 0.55; boardGroup.add(bd); }
   if (floorMesh) floorMesh.position.y = -(T + L);
   buildBowls(T + L);
   S.setExtent(1.66 * HALF); fitFloor(); poke(400);
@@ -444,7 +476,7 @@ function startGame(c) {
   if (mode === 'play') O.rememberLevel(LESSON, cfg.level);
   const g = new E.Game(cfg.n); const hs = cfg.handicap ? g.setHandicap(cfg.handicap) : []; newBoard(cfg.n, g); $('menu').hidden = true;
   $('modeLabel').textContent = mode === 'play' ? cfg.n + '줄 · 컴퓨터 수준 ' + cfg.level + (cfg.handicap ? ' · ' + cfg.handicap + '점 접바둑' : '') : cfg.n + '줄 · 둘이서';
-  S.setView(mode === 'play' && cfg.color < 0 ? Math.PI : 0, false, 0.62); updateButtons();
+  S.setView(mode === 'play' && cfg.color < 0 ? Math.PI : 0, false, VIEW_POL); updateButtons();
   if (mode === 'play' && game.turn !== cfg.color) { say('컴퓨터가 먼저 시작해요.'); aiTurn(); } else { say(mode === 'two' ? '흑부터 시작해요. 줄이 만나는 점을 눌러요.' : (cfg.handicap ? '접바둑이에요. 백이 먼저 두어요.' : '내가 흑이에요. 줄이 만나는 점을 눌러 시작해요!')); stratCoach(); }
   if (mode === 'play' && cfg.handicap && cfg.color > 0) {}
 }
@@ -529,7 +561,7 @@ function openCurriculum() {
 let lessonStep = { page: 0, item: 0, mistakes: 0, asked: 0, phase: 'page', bad: {} }, scriptRun = 0;
 function startLesson(id, obj) {
   resetState(); startWorker(); mode = 'learn'; lesson = obj || L.LESSONS.find((l) => l.id === id); if (!lesson) return; $('menu').hidden = true; $('modeLabel').textContent = chapLabel() + lesson.title;
-  lessonStep = { page: 0, item: 0, mistakes: 0, asked: 0, phase: 'page', bad: {} }; stats = O.newStats(); S.setView(0, false, 0.62); planLesson(); showPage();
+  lessonStep = { page: 0, item: 0, mistakes: 0, asked: 0, phase: 'page', bad: {} }; stats = O.newStats(); S.setView(0, false, VIEW_POL); planLesson(); showPage();
 }
 function loadPosition(n, g) { game = g; newBoard(n, g); clearMarks(); }
 function applyShow(show) {
@@ -770,7 +802,7 @@ function startGuess(g, ph) {
   $('modeLabel').textContent = (PH ? PH.icon + ' ' + PH.name + ' 맞히기 · ' : '다음 수 맞히기 · ') + gTitle(g);
   let from = 2, max = Math.min(60, mv.length);
   if (PH) { const r = SG.phaseRange(n, ph), cnt = 24, lo = Math.max(2, Math.min(r[0], mv.length - cnt)), hi = Math.max(lo, Math.min(r[1], mv.length) - cnt); from = ph === 0 ? 2 : lo + Math.floor(Math.random() * (hi - lo + 1)); max = Math.min(mv.length, from + cnt); }
-  newBoard(n); S.setView(0, false, 0.62); G = { g, mv, i: 0, tries: 0, pts: 0, right: 0, asked: 0, max, busy: true, from, ph };
+  newBoard(n); S.setView(0, false, VIEW_POL); G = { g, mv, i: 0, tries: 0, pts: 0, right: 0, asked: 0, max, busy: true, from, ph };
   updateButtons(); guessNext(true);
 }
 function startGuessPhase(ph) {   // 수업 끝에서 바로: 프로 기보 중 그 단계가 있는 19줄 대국 하나를 골라 맞히기
@@ -826,7 +858,7 @@ S.onFrame((dt, t) => { const k = 1 + Math.sin(t * 5) * 0.1; markPool.forEach((m)
 
 (async function boot() {
   try { await loadStones(); } catch (e) { S.failLoading('바둑돌 모델을 불러오지 못했어요.'); return; }
-  applyLook(); buildBoard(9); newBoard(9); S.start(); S.setView(0, true, 0.62); S.hideLoading(); say('메뉴를 골라 주세요.', null, false); updateButtons(); startWorker(); openMenu(true);
+  applyLook(); buildBoard(9); newBoard(9); S.start(); S.setView(0, true, VIEW_POL); S.hideLoading(); say('메뉴를 골라 주세요.', null, false); updateButtons(); startWorker(); openMenu(true);
 })();
 
 /* 시험용 손잡이 */
