@@ -1,8 +1,20 @@
 /* 바둑길 서비스 워커 — 처음 한 번 받아 두면 인터넷 없이도 열려요. 파일을 바꾸면 CACHE 이름을 올려 주세요. */
-var CACHE = 'baduk-v2';
+var CACHE = 'baduk-v3';
 var FILES = [
 "./",
 "./assets/pieces.mp3",
+"./assets/hero.webp",
+"./assets/bg-wood.webp",
+"./assets/ch1.webp",
+"./assets/ch2.webp",
+"./assets/ch3.webp",
+"./assets/ch4.webp",
+"./assets/ch5.webp",
+"./assets/ch6.webp",
+"./assets/ch7.webp",
+"./assets/ch8.webp",
+"./assets/ch9.webp",
+"./assets/ch10.webp",
 "./assets/pl_back1.webp",
 "./assets/pl_back10.webp",
 "./assets/pl_fwd1.webp",

@@ -370,7 +370,7 @@ function openCurriculum() {
   const chs = C.CHAPTERS.map((c) => {
     const ls = C.lessonsOf(c.id), done = ls.filter((l) => progress[l.id]).length, ex = rk.exams[c.id], open = c.id === nextCh;
     const secs = c.sections.map((s) => '<h4>' + s.t + '</h4><div class="go-lessons">' + s.ids.map((id) => L.LESSONS.find((l) => l.id === id)).filter(Boolean).map((l) => '<button type="button" class="go-lesson' + (progress[l.id] ? ' done' : '') + (l.id === nextId ? ' next' : '') + '" data-id="' + l.id + '"><i>' + l.icon + '</i><b>' + l.title + '</b><span>' + (progress[l.id] ? '⭐'.repeat(progress[l.id].stars) : (l.id === nextId ? '다음 차례' : l.sub || '')) + '</span></button>').join('') + '</div>').join('');
-    return '<details class="go-ch"' + (open ? ' open' : '') + '><summary><b>제' + c.no + '장 ' + c.title + '</b> <small>' + c.sub + ' · ' + done + '/' + ls.length + '강</small></summary><p class="go-goal">학습 목표: ' + c.goal + '</p>' + secs + (c.exam === false ? '' : '<button type="button" class="ch-btn go-exam" data-exam="' + c.id + '">📝 승급 시험 · 합격 시 ' + C.rankName(c.rank) + (ex ? ' (최고 ' + ex.best + '/' + ex.of + ')' : '') + '</button>') + '</details>';
+    return '<details class="go-ch"' + (open ? ' open' : '') + '><summary><img class="go-chimg" src="assets/' + c.id + '.webp" alt="" loading="lazy"><span><b>제' + c.no + '장 ' + c.title + '</b> <small>' + c.sub + ' · ' + done + '/' + ls.length + '강</small></span></summary><p class="go-goal">학습 목표: ' + c.goal + '</p>' + secs + (c.exam === false ? '' : '<button type="button" class="ch-btn go-exam" data-exam="' + c.id + '">📝 승급 시험 · 합격 시 ' + C.rankName(c.rank) + (ex ? ' (최고 ' + ex.best + '/' + ex.of + ')' : '') + '</button>') + '</details>';
   }).join('');
   const wn = Object.keys(loadWrong()).length, wd = wrongPool(true).length;
   el.innerHTML = '<div class="ch-card go-map"><h2>바둑길 · 교재 목차</h2><div class="go-rank">현재 급수 <b>' + C.rankName(rk.rank) + '</b>' + (nxtRank ? ' · 다음 목표 <b>' + C.rankName(nxtRank) + '</b>' : ' · 최고 단계에 도달했습니다') + '<small>급수는 이 앱의 학습 기준이며 공식 급수와 다릅니다.</small></div>' +
@@ -541,9 +541,9 @@ function openMenu(fromFinish) {
   const sel = { mode: prefs.mode === 'learn' ? 'learn' : prefs.mode, n: prefs.n, color: prefs.color, handicap: prefs.handicap, strategy: !!prefs.strategy, playLv: O.levelFor(LESSON) };
   const chip = (cls, val, label, small, on) => '<button type="button" class="ch-chip' + (on ? ' on' : '') + '" data-' + cls + '="' + val + '">' + label + (small ? '<small>' + small + '</small>' : '') + '</button>';
   function render() {
-    const modes = [['learn', '🎓', '바둑 배우기', '입문부터 고급까지'], ['play', '🤖', '컴퓨터와 대국', '9·13·19줄'], ['two', '👫', '둘이서 대국', '친구와 번갈아'], ['kibo', '📜', '기보·맞히기', '프로 대국 보기']];
+    const modes = [['learn', '🎓', '강의 듣기', '장·절 교재와 승급 시험'], ['play', '🤖', '컴퓨터와 대국', '9·13·19줄'], ['two', '👫', '둘이서 대국', '친구와 번갈아'], ['kibo', '📜', '기보·맞히기', '프로 대국 보기']];
     const doneN = L.LESSONS.filter((l) => progress[l.id]).length; let opt = '';
-    if (sel.mode === 'learn') opt = '<p class="why">입문 → 초급 → 중급 → 고급 → <b>전략(초반·중반·종반)</b> → <b>전략 심화</b>, 전체 ' + L.LESSONS.length + '개 수업 중 <b>' + doneN + '개</b>를 마쳤어요. 규칙, 단수·따내기, 사활, 축·장문, 포석, 끝내기, 형세 판단, 그리고 판 전체를 읽는 전략까지 하나씩 풀면서 익혀요.</p>';
+    if (sel.mode === 'learn') opt = '<p class="why">규칙부터 사활·포석·끝내기·형세 판단까지 10개 장으로 엮은 교재입니다. 전체 ' + L.LESSONS.length + '강 중 <b>' + doneN + '강</b>을 마치셨습니다. 장마다 승급 시험이 있습니다.</p>';
     else if (sel.mode === 'kibo') opt = '<p class="why">프로 대국을 처음부터 끝까지 보거나, <b>다음 수를 맞혀</b> 보면서 눈을 길러요. 내가 가진 SGF 파일도 불러올 수 있어요.</p>';
     else {
       const mh = E.maxHandicap(sel.n); if (sel.handicap > mh) sel.handicap = mh;
@@ -553,7 +553,7 @@ function openMenu(fromFinish) {
       opt += '<div class="ch-row"><label>🎯 전략 코치</label>' + chip('strat', 1, '켜기', '단계별 안내', sel.strategy) + chip('strat', 0, '끄기', '', !sel.strategy) + '</div>';
       if (sel.mode === 'play' && sel.handicap && sel.color < 0) opt += '<p class="why">접바둑은 약한 쪽이 흑을 잡아요. 내가 흑일 때 돌을 미리 놓고 시작해요.</p>';
     }
-    el.innerHTML = '<div class="ch-card"><h1>⚫⚪ 3D 바둑</h1><p>집을 더 많이 차지하면 이기는 바둑이에요.</p><div class="ch-modes">' +
+    el.innerHTML = '<div class="ch-card"><h1>바둑길</h1><p>집을 더 많이 차지하면 이기는 바둑이에요.</p><div class="ch-modes">' +
       modes.map((m) => '<button type="button" class="ch-mode' + (sel.mode === m[0] ? ' on' : '') + '" data-mode="' + m[0] + '"><i>' + m[1] + '</i><b>' + m[2] + '</b><span>' + m[3] + '</span></button>').join('') + '</div>' + opt +
       '<button type="button" class="ch-go" id="goBtn">' + (sel.mode === 'learn' ? '수업 고르기' : sel.mode === 'kibo' ? '기보 고르기' : '시작!') + '</button>' + '<div class="ch-row"><button type="button" class="ch-chip" id="wordsBtn">📖 낱말 풀이</button></div>' + (mode && !fromFinish ? '<div class="ch-row"><button type="button" class="ch-chip" id="closeMenu">닫기</button></div>' : '') + '</div>';
     el.querySelectorAll('[data-mode]').forEach((b) => { b.onclick = () => { sel.mode = b.dataset.mode; O.unlock(); O.sfx('tick'); render(); }; });

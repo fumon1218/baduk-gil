@@ -140,3 +140,13 @@ body.chess-page{background:radial-gradient(ellipse at 50% 20%,#4a3b2a 0%,#2a2018
 .ch-btn{color:#2a2018;background:#f8f2e4;border-radius:10px}.ch-msg{font-family:var(--font)}
 @media (min-width:1000px){.go-map{width:min(860px,100%)}}
 .go-map #diagBtn,.go-map #wrongBtn{width:100%;margin:6px 0}
+/* ---- 이미지 적용 ---- */
+body.chess-page{background:#1c140d url(../assets/bg-wood.webp) center/cover fixed}
+.go-ch summary{display:flex;align-items:center;gap:12px}.go-ch summary::before{display:none}
+.go-chimg{width:64px;height:64px;border-radius:8px;object-fit:cover;border:1px solid #cdbf9e;flex:none}
+.go-ch[open] .go-chimg{width:88px;height:88px}
+.go-ch summary span{flex:1}
+#menu .ch-card::before{content:'';display:block;height:150px;margin:-24px -26px 14px;border-radius:14px 14px 0 0;background:url(../assets/hero.webp) center 35%/cover;border-bottom:1px solid #cdbf9e}
+.go-map::before{height:110px!important}
+@media (max-width:520px){#menu .ch-card::before{margin:-24px -18px 12px;height:110px}.go-chimg{width:52px;height:52px}}
+#menu{align-items:flex-start}#menu>.ch-card{margin:auto}
