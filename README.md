@@ -35,3 +35,8 @@ GitHub Pages: 저장소 Settings → Pages → Branch `main` / `(root)` 로 켜�
 
 ## 먹여치기 수업
 `scripts/sahwal-tactics.mjs`(오래 걸림)가 바깥이 막힌 작은 구역에서 무작위로 모양을 만들고, 엔진 풀이기로 "흑이 먼저 두어 잡는 수가 하나뿐이고 그 수가 단수 자리(먹여치기)"인 모양만 `scripts/sahwal-tactics.json`에 모읍니다. `scripts/sahwal-build2.mjs`가 거기서 수업 2개(sh-t1 잡기, sh-t2 막고 살기, 문제 20개)를 골라 `js/lessons-tactics.js`를 만듭니다.
+
+## 참집·옥집 수업
+`scripts/sahwal-eyes.mjs`가 눈 둘레의 대각선 규칙(변·귀 1곳, 중앙 2곳 이상이면 옥집)과 엔진 풀이기 결과가 일치하는 모양만 `scripts/sahwal-eyes.json`에 모읍니다. `scripts/sahwal-build3.mjs`가 수업 2개(sh-e1 참집과 옥집, sh-e2 삶의 조건, 문제 22개)를 골라 `js/lessons-eyes.js`를 만듭니다.
+
+환격·패·빅·촉촉수는 풀이기가 빅(공존)과 패를 판정하지 못해 자동 검증이 되지 않았습니다. 사람이 설계·검수한 문제가 필요합니다.
