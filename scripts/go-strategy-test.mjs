@@ -167,4 +167,24 @@ if (fs.existsSync(path.join(dir, 'curriculum.js'))) {
   ok('교재 목차 ' + seen.size + '강 · 변화도 강의 k1/k2');
 }
 
+/* ---------- 8. 명국 기보 17국 · 문제 은행 800문제 ---------- */
+if (fs.existsSync(path.join(dir, 'bank.js'))) {
+  globalThis.window = globalThis; for (const f of ['games-classic.js', 'bank.js']) require(path.join(dir, f));
+  const fam = globalThis.OKS_GO_GAMES.filter((g) => g.fam); assert.equal(fam.length, 17, '명국 17국');
+  for (const g of fam) { const gm = new E.Game(19); for (let i = 0; i < g.mv.length; i += 2) assert.ok(gm.play(g.mv.charCodeAt(i) - 97, g.mv.charCodeAt(i + 1) - 97), g.id + ' ' + (i / 2 + 1) + '수 불법'); assert.ok(g.nick && g.note && g.b && g.w && g.re, g.id + ' 정보'); }
+  const B = globalThis.OKS_GO_BANK; assert.deepEqual([B.cap.length, B.con.length, B.rd.length], [200, 100, 500]);
+  const leg = (g, c) => { const o = []; for (let q = 0; q < g.n * g.n; q++) if (!g.get(q) && g.legal(q % g.n, (q / g.n) | 0, c)) o.push(q); return o; };
+  const seenId = new Set(); const same = (a, b) => JSON.stringify(a.slice().sort()) === JSON.stringify(b.slice().sort());
+  for (const [k, list] of Object.entries(B)) for (const r of list) {
+    assert.ok(!seenId.has(k + r.i), '번호 중복'); seenId.add(k + r.i); const rows = r.r.split('/'), n = rows.length; assert.ok(rows.every((x) => x.length === n), '정사각형');
+    const g = E.Game.fromRows(rows, 'X', n), ans = r.a.map((q) => q[1] * n + q[0]); assert.equal(ans.length, 1, '정답 하나'); const W0 = []; for (let q = 0; q < n * n; q++) if (g.get(q) < 0) W0.push(q);
+    if (k === 'cap') { const got = leg(g, 1).filter((q) => { const x = g.play(q % n, (q / n) | 0); const c = x.captured.length > 0; g.undo(); return c; }); assert.ok(same(got, ans), 'cap ' + r.i); }
+    else if (k === 'con') { const A = r.l[0], Bq = r.l[1], sB = Bq[1] * n + Bq[0]; const got = leg(g, 1).filter((q) => { g.play(q % n, (q / n) | 0); const gr = g.group(A[0], A[1]); const c = gr && gr.stones.indexOf(sB) >= 0; g.undo(); return c; }); assert.ok(same(got, ans), 'con ' + r.i); }
+    else { const gone = () => W0.every((q) => g.get(q) >= 0), fin = () => { if (gone()) return true; for (let q = 0; q < n * n; q++) { if (g.get(q)) continue; if (!g.play(q % n, (q / n) | 0)) continue; const o = gone(); g.undo(); if (o) return true; } return false; };
+      const got = []; for (let q = 0; q < n * n; q++) { if (g.get(q) || !g.play(q % n, (q / n) | 0)) continue; let f = !gone(); if (f) { g.pass(); f = fin(); g.undo(); } if (f) for (const w of leg(g, -1)) { g.play(w % n, (w / n) | 0); if (!fin()) f = false; g.undo(); if (!f) break; } g.undo(); if (f) got.push(q); }
+      assert.ok(same(got, ans), 'rd ' + r.i); const sq = E.Game.fromRows(rows, 'X', n); sq.play(r.a[0][0], r.a[0][1]); for (const m of r.s) assert.ok(sq.play(m[0], m[1]), 'rd 풀이 장면 ' + r.i); }
+  }
+  ok('명국 17국 규칙 재생 · 문제 은행 800문제(정답 자리 하나뿐임을 엔진으로 재검증)');
+}
+
 console.log(pass + ' PASS');

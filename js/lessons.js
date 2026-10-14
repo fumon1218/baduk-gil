@@ -70,9 +70,9 @@
         return badR(item.wrong || m, { seq: seq.slice(0, 7), reset: true, resetDelay: 2600, noAutoHint: true });
       };
     } else if (item.kind === 'set') {
-      var answers = Ts(item.answers), wrongAt = {}; (item.wrongAt || []).forEach(function (w) { wrongAt[T(w[0])] = w[1]; }); P.show = { rings: Ts(item.mark) };
+      var answers = Ts(item.answers), wrongAt = {}; (item.wrongAt || []).forEach(function (w) { wrongAt[T(w[0])] = w[1]; }); P.show = { rings: Ts(item.mark), labels: (item.labels || []).map(function (l) { return { s: T([l[0], l[1]]), t: l[2], color: l[3] || '#ffffff', big: true }; }) };
       P.hint = function () { return { s: answers[0], text: item.hintText || '노란 동그라미 자리를 봐요.' }; };
-      P.tap = function (s) { var g2 = g.copy(); if (!g2.play(s % n, (s / n) | 0)) return badR(errText(g2)); if (answers.indexOf(s) >= 0) return okR(explain); return badR(wrongAt[s] || item.wrong || '다시 생각해 봐요.'); };
+      P.tap = function (s) { var g2 = g.copy(); if (!g2.play(s % n, (s / n) | 0)) return badR(errText(g2)); if (answers.indexOf(s) >= 0) return okR(explain, item.after ? { after: item.after.map(function (a) { return { s: T([a[0], a[1]]), color: a[2] }; }), lead: { s: s, color: me } } : undefined); return badR(wrongAt[s] || item.wrong || '다시 생각해 봐요.'); };
     } else if (item.kind === 'pick' || item.kind === 'legalpick') {
       var ch = item.choices.map(function (c) { return { s: T(c.p || c), t: c.t }; }); ch.forEach(function (c, i) { if (!c.t) c.t = 'ABCDE'[i]; });
       var correct = [];
